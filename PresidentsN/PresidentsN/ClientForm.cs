@@ -10,11 +10,16 @@ using System.Windows.Forms;
 
 namespace PresidentsN
 {
-    public partial class ClientForm : Form
+    public partial class PlayerForm : Form
     {
-        public ClientForm()
+        public PlayerForm()
         {
             InitializeComponent();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

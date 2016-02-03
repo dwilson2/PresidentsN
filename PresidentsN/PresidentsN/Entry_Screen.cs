@@ -19,7 +19,7 @@ namespace PresidentsN
 
         private void StartBtn_Click(object sender, EventArgs e)
         {
-            ClientForm C1 = new ClientForm();
+            PlayerForm C1 = new PlayerForm();
             this.Hide();
             C1.ShowDialog();
         }
