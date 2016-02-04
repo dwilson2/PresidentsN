@@ -1,0 +1,5 @@
+E:\Senior Project\PresidentsServer\PresidentsServer\bin\Debug\PresidentsServer.exe.config
+E:\Senior Project\PresidentsServer\PresidentsServer\bin\Debug\PresidentsServer.exe
+E:\Senior Project\PresidentsServer\PresidentsServer\bin\Debug\PresidentsServer.pdb
+E:\Senior Project\PresidentsServer\PresidentsServer\obj\Debug\PresidentsServer.exe
+E:\Senior Project\PresidentsServer\PresidentsServer\obj\Debug\PresidentsServer.pdb

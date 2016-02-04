@@ -1,9 +1,0 @@
-E:\Senior Project\PresidentsN\PresidentsN\bin\Debug\PresidentsN.exe.config
-E:\Senior Project\PresidentsN\PresidentsN\obj\Debug\PresidentsN.csprojResolveAssemblyReference.cache
-E:\Senior Project\PresidentsN\PresidentsN\obj\Debug\PresidentsN.Properties.Resources.resources
-E:\Senior Project\PresidentsN\PresidentsN\obj\Debug\PresidentsN.csproj.GenerateResource.Cache
-E:\Senior Project\PresidentsN\PresidentsN\obj\Debug\PresidentsN.EntryScreen.resources
-E:\Senior Project\PresidentsN\PresidentsN\bin\Debug\PresidentsN.exe
-E:\Senior Project\PresidentsN\PresidentsN\bin\Debug\PresidentsN.pdb
-E:\Senior Project\PresidentsN\PresidentsN\obj\Debug\PresidentsN.exe
-E:\Senior Project\PresidentsN\PresidentsN\obj\Debug\PresidentsN.pdb

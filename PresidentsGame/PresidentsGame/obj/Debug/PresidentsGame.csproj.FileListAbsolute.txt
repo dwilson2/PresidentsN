@@ -1,0 +1,20 @@
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\bin\Debug\PresidentsGame.exe.config
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\bin\Debug\PresidentsGame.exe
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\bin\Debug\PresidentsGame.pdb
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.Properties.Resources.resources
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.csproj.GenerateResource.Cache
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.exe
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.pdb
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.EntryScreen.resources
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.SoloForm.resources
+C:\Users\DW53996\Documents\Presidents\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.csprojResolveAssemblyReference.cache
+E:\Senior Project\PresidentsGame\PresidentsGame\bin\Debug\PresidentsGame.exe.config
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.exe
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.pdb
+E:\Senior Project\PresidentsGame\PresidentsGame\bin\Debug\PresidentsGame.exe
+E:\Senior Project\PresidentsGame\PresidentsGame\bin\Debug\PresidentsGame.pdb
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.EntryScreen.resources
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.Properties.Resources.resources
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.csproj.GenerateResource.Cache
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.ClientForm.resources
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.csprojResolveAssemblyReference.cache
