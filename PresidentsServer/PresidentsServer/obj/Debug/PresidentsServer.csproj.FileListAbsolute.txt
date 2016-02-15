@@ -3,3 +3,4 @@ E:\Senior Project\PresidentsServer\PresidentsServer\bin\Debug\PresidentsServer.e
 E:\Senior Project\PresidentsServer\PresidentsServer\bin\Debug\PresidentsServer.pdb
 E:\Senior Project\PresidentsServer\PresidentsServer\obj\Debug\PresidentsServer.exe
 E:\Senior Project\PresidentsServer\PresidentsServer\obj\Debug\PresidentsServer.pdb
+E:\Senior Project\PresidentsServer\PresidentsServer\obj\Debug\PresidentsServer.csprojResolveAssemblyReference.cache

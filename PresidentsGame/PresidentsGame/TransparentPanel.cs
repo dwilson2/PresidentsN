@@ -47,6 +47,17 @@ namespace PresidentsGame
 
         public bool active { get; set; }
 
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // TransparentMessagePanel
+            // 
+            this.AutoSize = true;
+            this.ResumeLayout(false);
+
+        }
+
     }
 
 }

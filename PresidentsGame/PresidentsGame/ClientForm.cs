@@ -34,6 +34,9 @@ namespace PresidentsGame
 
             this.DoubleBuffered = true;
 
+            connection = new ClientConnect();
+            connection.mysend("Testing, how, the server, works");
+
             PopulateCardVP();
             mainf();
         }
@@ -72,35 +75,30 @@ namespace PresidentsGame
             }
         }
 
-        //Format the Graphics object correctly
-        public static void DrawPlayerCards(Deck pdeck)
+        public void DrawPlayerCards(Deck pdeck)
         {
             //Draw the player's cards on the screen
-            int xco = 43;
-            int yco = 229;
-
-
+         
             DrawInfo cardpos = new DrawInfo();
 
-           for (int i = 0; i < pdeck.size(); i++)
+
+            Control CC = this.C1;
+
+            for (int i = 0; i < pdeck.size(); i++)
             {
-
-                if (i == 13) yco = 347;
-                if (xco > 967) xco = 43;
-
-                cardpos.x = xco;
-                cardpos.y = yco;
+                cardpos.x = CC.Location.X;
+                cardpos.y = CC.Location.Y;
                 cardpos.img = pdeck.GetCard(i).img;
 
                 Carddraw.Add(cardpos);
 
-                xco += 77;
+                CC = this.GetNextControl(CC, true);
             }
 
             ActiveForm.Invalidate();
         }
 
-        public static void DrawPlayedCards(Deck lhdeck)
+        public void DrawPlayedCards(Deck lhdeck)
         {
             //Draw the played cards on the screen
             int xco = 31;
@@ -306,10 +304,15 @@ namespace PresidentsGame
             //Erase the list after the cards have been drawn to the screen as the list will be repopulated before future draws (after each hand)
             Carddraw.RemoveRange(0, Carddraw.Count);
 
+
             for (int i = 0; i < count; i++)
             {
                 cardpos = DrawArray[i];
-                e.Graphics.DrawImage(cardpos.img, cardpos.x, cardpos.y);
+                //reduce width and height by 5%
+                float rwidth = 0.95F * this.C1.Width;
+                float rheight = 0.98F * this.C1.Height;
+
+               e.Graphics.DrawImage(cardpos.img, cardpos.x, cardpos.y,rwidth,rheight);
             }
         }
 
@@ -319,6 +322,7 @@ namespace PresidentsGame
         public static Deck pdeck;
         public static Dictionary<string, Bitmap> CardImages;
         public static Dictionary<int,string> ErrorCodes;
+        public static ClientConnect connection;
 
         public struct DrawInfo
         {

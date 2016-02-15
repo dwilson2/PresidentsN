@@ -18,3 +18,4 @@ E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.Propert
 E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.csproj.GenerateResource.Cache
 E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.ClientForm.resources
 E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.csprojResolveAssemblyReference.cache
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Debug\PresidentsGame.TransparentMessagePanel.resources
