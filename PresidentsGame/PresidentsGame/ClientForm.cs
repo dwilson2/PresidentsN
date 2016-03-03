@@ -20,9 +20,8 @@ namespace PresidentsGame
         public ClientForm()
         {
             InitializeComponent();
-            Carddraw = new List <DrawInfo>();
-            lhdeck = new Deck();
             CardImages = new Dictionary<string, Bitmap>();
+            Carddraw = new List<DrawInfo>();
             ErrorCodes = new Dictionary<int, string>()
             {
                 {0,"No cards played."},
@@ -34,11 +33,9 @@ namespace PresidentsGame
 
             this.DoubleBuffered = true;
 
-            connection = new ClientConnect();
-            connection.mysend("Testing, how, the server, works");
-
             PopulateCardVP();
-            mainf();
+            connection = new ClientConnect();
+            cards = new byte[4096];
         }
 
         public static void PopulateCardVP()
@@ -75,7 +72,10 @@ namespace PresidentsGame
             }
         }
 
-        public void DrawPlayerCards(Deck pdeck)
+        //This function will change to instead taking in
+        //a vector of strings and using the cardImages dictionary to figure out which images 
+        //should be drawn
+        public void DrawPlayerCards(string[] playercards)
         {
             //Draw the player's cards on the screen
          
@@ -84,11 +84,11 @@ namespace PresidentsGame
 
             Control CC = this.C1;
 
-            for (int i = 0; i < pdeck.size(); i++)
+            for (int i = 0; i < playercards.Length; i++)
             {
                 cardpos.x = CC.Location.X;
                 cardpos.y = CC.Location.Y;
-                cardpos.img = pdeck.GetCard(i).img;
+                cardpos.img = CardImages[ playercards[i]] ;
 
                 Carddraw.Add(cardpos);
 
@@ -98,201 +98,37 @@ namespace PresidentsGame
             ActiveForm.Invalidate();
         }
 
-        public void DrawPlayedCards(Deck lhdeck)
+        //If a move is not an error move a player's selected cards into the last played
+        //From last played they simply get overridden, after a players turn,
+        //draw the cards they have remaining in their hand and wait to recieve messages
+        //indicating what their opponent played
+        public void DrawPlayedCards(string[] playedcards)
         {
-            //Draw the played cards on the screen
-            int xco = 31;
-            int yco = 35;
-
-
             DrawInfo cardpos = new DrawInfo();
 
-            for (int i = 0; i < lhdeck.size(); i++)
+            Control CC = this.P1;
+
+            for (int i = 0; i < playedcards.Length; i++)
             {
-                cardpos.x = xco;
-                cardpos.y = yco;
-                cardpos.img = lhdeck.GetCard(i).img;
+                cardpos.x = CC.Location.X;
+                cardpos.y = CC.Location.Y;
+                cardpos.img = CardImages[playedcards[i]];
 
                 Carddraw.Add(cardpos);
 
-                xco += 77;
+                CC = this.GetNextControl(CC, true);
             }
 
             ActiveForm.Invalidate();
         }
 
-        static void Shuffle(Deck a, Deck AI, Deck Player)
-        {
-           Random x = new Random();
-           int turn = 0; 
-
-         while(a.size() > 0) {
-
-               int cardvalue = x.Next(1, 14);
-
-               if (turn == 0)
-               {
-                   //AI
-                   if ( a.DealCard(cardvalue, AI) )
-                   {
-                       turn = 1;
-                   }
-               }
-               else
-               {
-                   //Player
-                   if ( a.DealCard(cardvalue, Player) )
-                   {
-                       turn = 0;
-                   }
-               }
-           }
-        }
-
-        //static void mainf()
-        public void mainf()
-        {
-            //Create a deck of of all the cards and one for the player and the AI
-            Deck a = new Deck(); 
-            Deck AIdeck = new Deck();
-            pdeck = new Deck();
-
-            //Note: 1 - Ace, Royals are 11,12,13
-            //Populates a deck with one card of each suite
-            for (int i = 1; i <= 13; i++)
-            {
-                a.SetCard(i, Suite.diamonds);
-                a.SetCard(i, Suite.clubs);
-                a.SetCard(i, Suite.hearts);
-                a.SetCard(i, Suite.spades);
-            }
-
-            //Distribute the cards evenly across the player and AI Decks (If 1v1 should be 26 each)
-            Shuffle(a, AIdeck, pdeck);
-            
-            //Put the players cards in order (not totally necessary but makes the game easier to play(
-            pdeck.OrderCards();
-
-            //Draw the players' cards to the screen (would want to set up some kind of do-while (pdeck > 0 || AIdeck.size > 0) )
-            DrawPlayerCards(pdeck);
-        }
-
-        //0-3 Value for the Suites
-        public enum Suite
-        {
-            diamonds,
-            clubs,
-            hearts,
-            spades
-        };
-
-        public struct Card {
-
-            public int CV { get; set; }
-            public Suite SV { get; set; }
-            public Bitmap img { get; set; }
-            public string name { get; set; }
-        }
-
-    public class Deck : Object
-    {
-        public Deck()
-        {
-            deck = new List<Card>();
-        }
-
-        public void SetCard( int i, Suite s)
-        {
-           
-            Card cCard = new Card();
-            cCard.CV = i;
-            cCard.SV = s;
-
-            string cname = cCard.SV.ToString().Substring(0, 1) + cCard.CV.ToString();
-
-            try
-            {
-                object O = PresidentsGame.Properties.Resources.ResourceManager.GetObject(cname);
-                cCard.img = new Bitmap((Image)O);
-            }
-            catch
-            {
-                Console.WriteLine("ERROR: Bad param - " + cname); 
-            }
-
-            this.deck.Add(cCard);
-        }
-
-        public void RemoveCard(int value, Suite s)
-        {
-            Predicate<Card> T = (Card x) => { return (x.CV == value) && (x.SV == s); };
-
-            //If a card of this type exists we get the first one
-            this.deck.Remove(this.deck.Find(T));
-        }
-
-        public Card GetCard(int index)
-        {
-                Card nullc = new Card();
-                
-                if (index > this.size()) return nullc;
-
-                Card[] cardarray = deck.ToArray();
-
-                return cardarray[index];
-        }
-
-        public bool DealCard(int i, Deck b)
-        {
-            Card cCard = new Card();        
-            Predicate<Card> T = (Card x) => { return x.CV == i; };
-
-            //If a card of this type exists we get the first one
-           cCard = this.deck.Find( T );
-
-            //If we actually found a card with the random number put it in either the player or AI decks
-            if ( !cCard.CV.Equals(0))
-            {
-                b.SetCard(cCard.CV, cCard.SV);
-                this.deck.Remove(cCard);
-                return true;
-            }
-
-            return false;
-        }
-
-        public void OrderCards()
-        {
-            deck.Sort(CompareCards);
-        }
-
-        private static int CompareCards(Card c1, Card c2)
-        {
-            if (c1.CV > c2.CV || (c1.CV == c2.CV && c1.SV > c2.SV) )
-            {
-                return 1;
-            }
-            else
-                return -1;
-                
-        }
-
-   
-        public int size()
-        {
-            return deck.Count();
-        }
-
-        List<Card> deck;
-    }
-  
         private void SoloForm_Load(object sender, EventArgs ev)
         {
+            HandleResponse();
         }
 
         private void Deal_Click(object sender, EventArgs e)
         {
-            mainf();
         }
  
         private void SoloForm_Paint(object sender, PaintEventArgs e)
@@ -316,13 +152,73 @@ namespace PresidentsGame
             }
         }
 
+        private void HandleError(String[] messages)
+        {
+            //Single character ( 0-4 indicating error code)
+            string code = messages[0].Substring(1,1);
+            
+            string message;
+
+            if (code == "0")
+            {
+                message = ErrorCodes[0];
+            }
+            else if (code == "1")
+            {
+                message = ErrorCodes[1];
+            }
+            else if (code == "2")
+            {
+                message = ErrorCodes[2];
+            }
+            else if (code == "3")
+            {
+                message = ErrorCodes[3];
+            }
+            else if (code == "4")
+            {
+                message = ErrorCodes[4];
+            }
+            else
+            {
+                message = "Incorrect error recevied";
+            }
+
+            MessageBox.Show(message);
+        }
+
+        private void HandleResponse()
+        {
+            byte[] resp = new byte [4096];
+            connection.RecvResponse(resp);
+
+            string result = System.Text.Encoding.UTF8.GetString(resp).Substring(0, resp.Length);
+            result = result.Replace(" ", string.Empty);
+
+            //The first message contains either an error or The last played cards
+            char[] delimiter1 = { '|', '|', '+' };
+            String[] messages1 = result.Split(delimiter1);
+
+            Char delimiter = ',';
+            String[] messages = result.Substring(messages1[0].Length,result.Length).Split(delimiter);
+
+            if (messages1[0].Substring(0, 1) == "E")
+            {
+                HandleError(messages1);
+            }
+            else
+            {
+                DrawPlayerCards(messages);
+                DrawPlayedCards(messages1[0].Split(delimiter));
+            }
+        }
+
         //Global objects
         public static List<DrawInfo> Carddraw;
-        public static Deck lhdeck;
-        public static Deck pdeck;
         public static Dictionary<string, Bitmap> CardImages;
         public static Dictionary<int,string> ErrorCodes;
         public static ClientConnect connection;
+        public static byte[] cards;
 
         public struct DrawInfo
         {
@@ -333,80 +229,42 @@ namespace PresidentsGame
 
         private void Play_Click(object sender, EventArgs e)
         {
-            Deck tmph = new Deck(); //tmph - temporary hand since we must verify the move
-
             //If the card is selected put it in the deck (find out which are selected by looking at
             //the panels. Find out which card is on the panel by looking at Carddraw.)
-            if (C1.active == true) Settmp(tmph, 0);
-            if (C2.active == true) Settmp(tmph, 1);
-            if (C3.active == true) Settmp(tmph, 2);
-            if (C4.active == true) Settmp(tmph, 3);
-            if (C5.active == true) Settmp(tmph, 4);
-            if (C6.active == true) Settmp(tmph, 5);
-            if (C7.active == true) Settmp(tmph, 6);
-            if (C8.active == true) Settmp(tmph, 7);
-            if (C9.active == true) Settmp(tmph, 8);
-            if (C10.active == true) Settmp(tmph, 9);
-            if (C11.active == true) Settmp(tmph, 10);
-            if (C12.active == true) Settmp(tmph, 11);
-            if (C13.active == true) Settmp(tmph, 12);
-            if (C14.active == true) Settmp(tmph, 13);
-            if (C15.active == true) Settmp(tmph, 14);
-            if (C16.active == true) Settmp(tmph, 15);
-            if (C17.active == true) Settmp(tmph, 16);
-            if (C18.active == true) Settmp(tmph, 17);
-            if (C19.active == true) Settmp(tmph, 18);
-            if (C20.active == true) Settmp(tmph, 19);
-            if (C21.active == true) Settmp(tmph, 20);
-            if (C22.active == true) Settmp(tmph, 21);
-            if (C23.active == true) Settmp(tmph, 22);
-            if (C24.active == true) Settmp(tmph, 23);
-            if (C25.active == true) Settmp(tmph, 24);
-            if (C26.active == true) Settmp(tmph, 25);
+            if (C1.active == true) Settmp(0);
+            if (C2.active == true) Settmp(1);
+            if (C3.active == true) Settmp(2);
+            if (C4.active == true) Settmp(3);
+            if (C5.active == true) Settmp(4);
+            if (C6.active == true) Settmp(5);
+            if (C7.active == true) Settmp(6);
+            if (C8.active == true) Settmp(7);
+            if (C9.active == true) Settmp(8);
+            if (C10.active == true) Settmp(9);
+            if (C11.active == true) Settmp(0);
+            if (C12.active == true) Settmp(11);
+            if (C13.active == true) Settmp(12);
+            if (C14.active == true) Settmp(13);
+            if (C15.active == true) Settmp(14);
+            if (C16.active == true) Settmp(15);
+            if (C17.active == true) Settmp(16);
+            if (C18.active == true) Settmp(17);
+            if (C19.active == true) Settmp(18);
+            if (C20.active == true) Settmp(19);
+            if (C21.active == true) Settmp(20);
+            if (C22.active == true) Settmp(21);
+            if (C23.active == true) Settmp(22);
+            if (C24.active == true) Settmp(23);
+            if (C25.active == true) Settmp(24);
+            if (C26.active == true) Settmp(25);
 
-            if (VerifyHand(tmph)) 
-            {
-                //Needed to clear out the previously played hand
-                lhdeck = new Deck();
-
-                for (int i = 0; i < tmph.size(); i++)
-                {
-                    lhdeck.SetCard(tmph.GetCard(i).CV, tmph.GetCard(i).SV);
-                }
-
-                DrawPlayedCards(lhdeck);
-
-                PrevH.Visible = true;
-
-                //Get rid of played cards from player hand
-                for (int i = 0; i < lhdeck.size(); i++)
-                {
-                    pdeck.RemoveCard(lhdeck.GetCard(i).CV, lhdeck.GetCard(i).SV);
-                }
-
-                DrawPlayerCards(pdeck);
-
-               
-            }
-            
+           
+            PrevH.Visible = true;
             Clear();
-        }
 
-        public static bool VerifyHand(Deck Temp)
-        {
-            if (Temp.size() > 5 )
-            {
-                MessageBox.Show("INVALID MOVE: Five cards maximum per hand");
-                return false;
-            }
-
-            if ( lhdeck.size()!= 0 && Temp.size() != lhdeck.size() )
-            {
-                MessageBox.Show("INVALID MOVE: Previous hand had " + lhdeck.size() + "cards");
-                return false;
-            }
-
-            return true;
+            connection.SendCards(cards.ToString());
+            HandleResponse();
+            Array.Clear(cards, 0, 4096);
         }
 
         private void Clear()
@@ -439,9 +297,9 @@ namespace PresidentsGame
             if (C26.active == true) C26.Invalidate();
         }
 
-        public static void Settmp(Deck temp, int index)
+        public static void Settmp(int index)
         {
-            temp.SetCard(pdeck.GetCard(index).CV, pdeck.GetCard(index).SV);
+            cards.SetValue(BitConverter.GetBytes(index)+",",cards.Length);
         }
  
         private void C1_Click(object sender, EventArgs e)

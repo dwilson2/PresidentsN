@@ -7,7 +7,6 @@ using System.Data;
 using System.Net.Sockets;
 using System.Net;
 
-
 namespace PresidentsGame
 {
     public class ClientConnect
@@ -27,25 +26,61 @@ namespace PresidentsGame
             }
         }
 
-        public int mysend(string message)
+        public int RecvResponse(byte[] response)
         {
-            byte[] msg = Encoding.UTF8.GetBytes(message);
-            byte[] recvbytes = new byte[1024];
+            byte[] sizebuffer = new byte[(sizeof(int))];
+            byte[] msg = new byte[4096];
+
             try
             {
-                clientSocket.Send(msg, 0, msg.Length,SocketFlags.None);
+                //Small enough that it can all be recieved in a single shot
+                clientSocket.Receive(sizebuffer, sizeof(int), SocketFlags.None);
 
-                // Read the response bytes.
-                int bytesReceived = 0;
-                byte[] incomingMessageBuffer = new byte[4096];
+                int bytesSent = 0;
 
-                bytesReceived = clientSocket.Receive(incomingMessageBuffer, 0, incomingMessageBuffer.Length, SocketFlags.None);
+                int size = BitConverter.ToInt32(sizebuffer, 0);
+
+                do
+                {
+                    bytesSent += clientSocket.Receive(msg, 0, size, SocketFlags.None);
+                } while (bytesSent < size);
+
             }
             catch (SocketException e)
             {
                 Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
                 return (e.ErrorCode);
             }
+
+            response = msg;
+            return 0;
+        }
+
+        //message will hold a list of card (positions)
+        public int SendCards(string message)
+        {
+            byte[] msg = Encoding.UTF8.GetBytes(message);
+            byte[] sizebuffer = BitConverter.GetBytes(message.Length);
+
+            try
+            {
+                //Small enough that it can all be sent in a single shot
+                clientSocket.Send(sizebuffer,sizeof(int),SocketFlags.None);
+
+                int bytesSent = 0;
+
+                do {
+                bytesSent += clientSocket.Send(msg, 0, msg.Length,SocketFlags.None);
+
+                } while (bytesSent < msg.Length);
+
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
+                return (e.ErrorCode);
+            }
+
             return 0;
         }
     }

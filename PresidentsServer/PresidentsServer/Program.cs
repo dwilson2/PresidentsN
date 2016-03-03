@@ -7,7 +7,7 @@ using System.Data;
 using System.Net.Sockets;
 using System.Net;
 using System.IO;
-
+using System.Threading;
 namespace PresidentsServer
 {
     class Program
@@ -16,8 +16,79 @@ namespace PresidentsServer
 
         private Socket m_soc = new Socket(AddressFamily.InterNetwork, SocketType.Stream
            , ProtocolType.Tcp);
-        
 
+        public static Socket[] clients = new Socket[numplayers];
+        
+        //Either cards (what's left in the deck to be drawn) 
+        //or an error code (indicating an invalid move)
+        public int SendResponse(int clientnum, byte[] move)
+        {
+            int byteCount = 0;
+
+            byte[] Messagesize = BitConverter.GetBytes(move.Length);
+
+            try
+            {
+                clients[clientnum].Send(Messagesize, 0, Messagesize.Length, SocketFlags.None);
+
+                int size = BitConverter.ToInt32(Messagesize, 0);
+
+                do
+                {
+                    byteCount += clients[clientnum].Send(move, 0, size, SocketFlags.None);
+                } while (byteCount < size);
+            }
+
+            catch (SocketException e)
+            {
+                Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
+                return (e.ErrorCode);
+            }
+
+            return 0;
+        }
+
+        //A list of positions which correspond to cards in their deck
+        public int RecieveMove(int clientnum, byte[] movebuff)
+        {
+            int byteCount = 0;
+
+            //Populate a byte array in this function which can be processed in the loop below
+            byte[] Messagesize = new byte[sizeof(int)];
+            byte[] message = new byte[4096];
+
+            try
+            {
+
+                clients[clientnum].Receive(Messagesize, 0, Messagesize.Length, SocketFlags.None);
+
+                int size = BitConverter.ToInt32(Messagesize, 0);
+
+                do
+                {
+                    byteCount += clients[clientnum].Receive(message, 0, size, SocketFlags.None);
+                } while (byteCount < size);
+            }
+
+            catch (SocketException e)
+            {
+                Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
+                return (e.ErrorCode);
+            }
+
+            movebuff = message;
+            return 0;
+        }
+
+        public string[] ProcessMessage(byte[] message)
+        {
+            string result = System.Text.Encoding.UTF8.GetString(message).Substring(0, message.Length);
+            Char delimiter = ',';
+            result = result.Replace(" ", string.Empty);
+            String[] messages = result.Split(delimiter);
+
+            return messages;
+        }
 
         static void Main(string[] args)
         {
@@ -39,11 +110,6 @@ namespace PresidentsServer
                 Console.WriteLine( "Server failed to initialized.  Exception: " + e.Message );
             }
             byte[] incomingMessageBuffer = new byte[BUFFER_SIZE];	// Receive buffer
-            int bytesReceived = 0;                      // Received byte count
-
-
-                // Start loop to listen for clients
-                Socket[] clients = new Socket[numplayers];
 
                 // Wait for a client connection
                 for (int i = 0; i < clients.Length; i++)
@@ -69,35 +135,29 @@ namespace PresidentsServer
                 }
 
            bool winindicator = false;
-           int turn = 0;
+           int turn;
+
+           Game G = new Game();
+            
+           //First thing to do is find out who has the 3 of diamonds
+           if (Game.AIdeck.FindCard(3, Suite.diamonds))
+               turn = 0;
+           else
+               turn = 1;
 
            do
            {
-               int byteCount = 0;
-
-                //Received data, send the data back to the client
-              bytesReceived = clients[turn].Receive(incomingMessageBuffer, 0, incomingMessageBuffer.Length, SocketFlags.None);
-              clients[turn].Send(incomingMessageBuffer, 0, bytesReceived, SocketFlags.None);
-              byteCount += bytesReceived;
-
-               string result = System.Text.Encoding.UTF8.GetString(incomingMessageBuffer).Substring(0,bytesReceived);
-               Char delimiter = ',';
-               result = result.Replace(" ",string.Empty);
-               String[] messages = result.Split(delimiter);
-               foreach (var substring in messages)
-               {
-                   Console.WriteLine(substring);
-               }
-
-               Console.WriteLine("Server: Successfully recieved {0} bytes from client.", byteCount);
-
                if (turn == 1) turn = 0;
                else
                    turn = 1;
 
+               Thread.Sleep(100);
+
+               winindicator = G.Checkwin();
+
            } while (winindicator != true);
 
-            for (int i = 1; i < clients.Length; i++)
+            for (int i = 0; i < clients.Length; i++)
             {
                 clients[i].Close();
             }

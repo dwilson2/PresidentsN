@@ -56,6 +56,17 @@ namespace PresidentsServer
             this.deck.Remove(this.deck.Find(T));
         }
 
+        //True if the deck has the card, false otherwise
+        public bool FindCard(int value, Suite s)
+        {
+            Predicate<Card> T = (Card x) => { return (x.CV == value) && (x.SV == s); };
+
+            if (this.deck.Find(T).CV != value || this.deck.Find(T).SV != s)
+                return false;
+
+            return true;
+        }
+
         public Card GetCard(int index)
         {
                 Card nullc = new Card();
@@ -108,12 +119,136 @@ namespace PresidentsServer
             return deck.Count();
         }
 
+        public void empty()
+        {
+            deck.RemoveRange(0, size());
+        }
+
         List<Card> deck;
     }
 
-    public static class Game
+    public class Game
     {
+        public enum Hand
+        {
+            error,
+            high_card,
+            pair,
+            three_kind,
+            straight,
+            flush,
+            full_house,
+            four_kind,
+            straight_flush
+        };
+
+        //VerifyHand which calls Checkhand
+        //tdeck.empty();
+
+        public bool isFlush()
+        {
+            Card cc = tdeck.GetCard(0);
+
+            for (int i = 1; i < tdeck.size(); i++)
+            {
+                if (tdeck.GetCard(i).SV != cc.SV)
+                    return false;
+
+                cc = tdeck.GetCard(i);
+            }
+
+            return true;
+        }
+
+        public bool isStraight()
+        {
+            int val = tdeck.GetCard(0).CV;
+
+            for (int i = 1; i < tdeck.size(); i++)
+            {
+                if (tdeck.GetCard(i).CV != ++val)
+                    return false;
+            }
+
+            return true;
+        }
+
+        public bool Multiples(Deck deck)
+        {
+            int val = deck.GetCard(0).CV;
+
+            for (int i = 1; i < deck.size(); i++)
+            {
+                if (deck.GetCard(i).CV != val)
+                    return false;
+            }
+
+            return true;
+        }
+
+        public bool isFullHouse()
+        {
+            tdeck.OrderCards();
+
+            Deck tdeck2 = new Deck();
+            tdeck2.SetCard(tdeck.GetCard(0).CV, tdeck.GetCard(0).SV);
+            tdeck2.SetCard(tdeck.GetCard(1).CV, tdeck.GetCard(0).SV);
+
+            Deck tdeck3 = new Deck();
+            tdeck2.SetCard(tdeck.GetCard(2).CV, tdeck.GetCard(0).SV);
+            tdeck2.SetCard(tdeck.GetCard(3).CV, tdeck.GetCard(0).SV);
+            tdeck2.SetCard(tdeck.GetCard(4).CV, tdeck.GetCard(0).SV);
+
+            if (Multiples(tdeck2) && Multiples(tdeck3))
+                return true;
+
+            return false;
+        }
+
         //Add function to determine move type (enum) 
+        public Hand Checkhand()
+        {
+            bool straight, flush, fullhouse;
+            Hand result = Hand.error;
+
+            if (tdeck.size() == 5)
+            {
+                straight = isStraight();
+                flush = isFlush();
+                fullhouse = isFullHouse();
+
+                if (straight && flush)
+                    result = Hand.straight_flush;
+
+                else if (fullhouse)
+                    result = Hand.full_house;
+
+                else if (flush)
+                    result = Hand.flush;
+
+                else if (straight)
+                    result = Hand.straight;
+            }
+            else if (tdeck.size() == 4)
+            {
+                if (Multiples(tdeck))
+                    result = Hand.four_kind;
+            }
+            else if (tdeck.size() == 3)
+            {
+                if (Multiples(tdeck))
+                    result = Hand.three_kind;
+            }
+            else if (tdeck.size() == 2)
+            {
+                if (Multiples(tdeck))
+                    result = Hand.pair;
+            }
+            else if (tdeck.size() == 1)
+                result = Hand.high_card;
+
+            return result;
+        }
 
         static Game() 
         {
@@ -122,6 +257,7 @@ namespace PresidentsServer
             AIdeck = new Deck();
             pdeck = new Deck();
             lpdeck = new Deck();
+            tdeck = new Deck();
 
             Initializegame();
 
@@ -175,9 +311,50 @@ namespace PresidentsServer
             }
         }
 
-        private static Deck masterdeck;
-        private static Deck AIdeck;
-        private static Deck pdeck;
-        private static Deck lpdeck;
+        public byte[] Buildmessagecards(int turn)
+        {
+            byte[] cards = new byte[4096];
+
+            Deck decktouse = (turn == 0  ? AIdeck : pdeck);
+
+            int size = decktouse.GetCard(0).name.ToCharArray().Length;
+
+            for (int i = 0; i < decktouse.size(); i++)
+            {
+                System.Buffer.BlockCopy(decktouse.GetCard(i).name.ToCharArray(), 0, cards, size * i, size);
+            }
+
+                return cards;
+        }
+
+        public byte[] BuildmessageLP()
+        {
+            byte[] cards = new byte[4096];
+
+            int size = lpdeck.GetCard(0).name.ToCharArray().Length;
+
+            for (int i = 0; i < lpdeck.size(); i++)
+            {
+                System.Buffer.BlockCopy(lpdeck.GetCard(i).name.ToCharArray(), 0, cards, size * i, size);
+            }
+
+            return cards;
+        }
+
+        public bool Checkwin()
+        {
+            if (AIdeck.size() == 0 || pdeck.size() == 0)
+                return true;
+            else
+                return false;
+        }
+
+        
+
+        public static Deck masterdeck;
+        public static Deck AIdeck;
+        public static Deck pdeck;
+        public static Deck lpdeck;
+        public static Deck tdeck;
     }
 }
