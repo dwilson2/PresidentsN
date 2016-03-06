@@ -24,11 +24,11 @@ namespace PresidentsGame
             Carddraw = new List<DrawInfo>();
             ErrorCodes = new Dictionary<int, string>()
             {
-                {0,"No cards played."},
-                {1, "Incorrect number of cards played."},
-                {2, "Invalid hand. Is your hand a 'poker' hand?"},
-                {3, "Your hand is not better than your opponents."},
-                {4, "Sorry your time expired so you automatically pass."}
+                {1,"No cards played."},
+                {2, "Incorrect number of cards played."},
+                {3, "Invalid hand. Is your hand a 'poker' hand?"},
+                {4, "Your hand is not better than your opponents."},
+                {5, "Sorry your time expired so you automatically pass."}
             };
 
             this.DoubleBuffered = true;

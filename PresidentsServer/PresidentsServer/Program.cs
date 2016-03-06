@@ -21,7 +21,7 @@ namespace PresidentsServer
         
         //Either cards (what's left in the deck to be drawn) 
         //or an error code (indicating an invalid move)
-        public int SendResponse(int clientnum, byte[] move)
+        static int SendResponse(int clientnum, byte[] move)
         {
             int byteCount = 0;
 
@@ -49,7 +49,7 @@ namespace PresidentsServer
         }
 
         //A list of positions which correspond to cards in their deck
-        public int RecieveMove(int clientnum, byte[] movebuff)
+        static int RecieveMove(int clientnum, byte[] movebuff)
         {
             int byteCount = 0;
 
@@ -80,7 +80,7 @@ namespace PresidentsServer
             return 0;
         }
 
-        public string[] ProcessMessage(byte[] message)
+        static string[] ProcessMessage(byte[] message)
         {
             string result = System.Text.Encoding.UTF8.GetString(message).Substring(0, message.Length);
             Char delimiter = ',';
@@ -134,24 +134,59 @@ namespace PresidentsServer
                     }
                 }
 
+            
+
            bool winindicator = false;
            int turn;
 
            Game G = new Game();
+
+           byte[] p1cards = G.Buildmessagecards(0);
+           byte[] p2cards = G.Buildmessagecards(1);
+
+           SendResponse(0, p1cards);
+           SendResponse(0, p2cards);
             
            //First thing to do is find out who has the 3 of diamonds
            if (Game.AIdeck.FindCard(3, Suite.diamonds))
                turn = 0;
            else
                turn = 1;
+           
+           byte[] turni = BitConverter.GetBytes('T');
+           SendResponse(turn, turni);
 
            do
            {
-               if (turn == 1) turn = 0;
-               else
-                   turn = 1;
+               byte[] movebuff = new byte[4096];
+               RecieveMove(turn, movebuff);
+               string[] cards = ProcessMessage(movebuff);
 
-               Thread.Sleep(100);
+               int ec = G.VerifyHand(cards, turn);
+
+               if ( ec == 0)
+               {
+                   G.PlayCards();
+
+                   byte[] lp = G.BuildmessageLP();
+                   byte[] p1 = G.Buildmessagecards(0);
+                   byte[] p2 = G.Buildmessagecards(1);
+
+                   SendResponse(0, lp);
+                   SendResponse(0, p1);
+                   SendResponse(1, lp);
+                   SendResponse(1, p2);
+
+                   if (turn == 1) 
+                       turn = 0;
+                   else
+                       turn = 1;
+               }
+               else
+               {
+                   Byte[] resp = BitConverter.GetBytes('E' + ec);
+                   SendResponse(turn, resp);
+               }
 
                winindicator = G.Checkwin();
 

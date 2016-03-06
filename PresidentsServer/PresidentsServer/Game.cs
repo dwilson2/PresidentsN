@@ -142,8 +142,34 @@ namespace PresidentsServer
             straight_flush
         };
 
-        //VerifyHand which calls Checkhand
-        //tdeck.empty();
+        public int VerifyHand(string[] cards, int turn)
+        {
+            Deck decktouse = (turn == 0 ? AIdeck : pdeck);
+            int retval = 0;
+
+            for (int i = 0; i < cards.Length; i++)
+            {
+                int cardi = Convert.ToInt32(cards[i],10);
+                Card cc = decktouse.GetCard(cardi);
+                tdeck.SetCard(cc.CV, cc.SV);
+            }
+
+            Hand res = Checkhand();
+
+            if (cards.Length == 0)
+                retval = 1;
+            else if ((tdeck.size() != lpdeck.size()) && lpdeck.size() > 0)
+                retval = 2;
+            else if (res == Hand.error)
+                retval = 3;
+            else if (res < lpdeckh)
+                retval = 4;
+
+            //TIMEOUT ERROR?
+
+
+            return retval;
+        }
 
         public bool isFlush()
         {
@@ -250,6 +276,19 @@ namespace PresidentsServer
             return result;
         }
 
+        public void PlayCards()
+        {
+            lpdeckh = Checkhand();
+            lpdeck.empty();
+
+            for (int i = 0; i < tdeck.size(); i++)
+            {
+                tdeck.DealCard(i,lpdeck);
+            }
+
+            tdeck.empty();
+        }
+
         static Game() 
         {
             //Carddraw = new List<DrawInfo>();
@@ -280,6 +319,7 @@ namespace PresidentsServer
 
             //Put the players cards in order (not totally necessary but makes the game easier to play)
             pdeck.OrderCards();
+            AIdeck.OrderCards();
         }
 
         static void Shuffle()
@@ -321,7 +361,8 @@ namespace PresidentsServer
 
             for (int i = 0; i < decktouse.size(); i++)
             {
-                System.Buffer.BlockCopy(decktouse.GetCard(i).name.ToCharArray(), 0, cards, size * i, size);
+                string cardstring = decktouse.GetCard(i).name + ',';
+                System.Buffer.BlockCopy(cardstring.ToCharArray(), 0, cards, size * i, cardstring.Length);
             }
 
                 return cards;
@@ -337,6 +378,8 @@ namespace PresidentsServer
             {
                 System.Buffer.BlockCopy(lpdeck.GetCard(i).name.ToCharArray(), 0, cards, size * i, size);
             }
+
+            System.Buffer.BlockCopy("||+".ToCharArray(), 0, cards, size * (lpdeck.size() - 1), "||+".ToCharArray().Length);
 
             return cards;
         }
@@ -356,5 +399,6 @@ namespace PresidentsServer
         public static Deck pdeck;
         public static Deck lpdeck;
         public static Deck tdeck;
+        public static Hand lpdeckh;
     }
 }
