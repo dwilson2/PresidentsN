@@ -42,7 +42,7 @@ namespace PresidentsGame
 
                 do
                 {
-                    bytesSent += clientSocket.Receive(msg, 0, size, SocketFlags.None);
+                    bytesSent += clientSocket.Receive(msg, bytesSent, (size-bytesSent), SocketFlags.None);
                 } while (bytesSent < size);
 
             }
@@ -70,7 +70,7 @@ namespace PresidentsGame
                 int bytesSent = 0;
 
                 do {
-                bytesSent += clientSocket.Send(msg, 0, msg.Length,SocketFlags.None);
+                bytesSent += clientSocket.Send(msg, bytesSent, (msg.Length-bytesSent), SocketFlags.None);
 
                 } while (bytesSent < msg.Length);
 

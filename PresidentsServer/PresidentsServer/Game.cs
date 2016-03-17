@@ -42,8 +42,9 @@ namespace PresidentsServer
             Card cCard = new Card();
             cCard.CV = i;
             cCard.SV = s;
-
+           
             string cname = cCard.SV.ToString().Substring(0, 1) + cCard.CV.ToString();
+            cCard.name = cname;
 
             this.deck.Add(cCard);
         }
@@ -162,13 +163,122 @@ namespace PresidentsServer
                 retval = 2;
             else if (res == Hand.error)
                 retval = 3;
-            else if (res < lpdeckh)
+            else if (res < lpdeckh && lpdeck.size() > 0)
                 retval = 4;
 
-            //TIMEOUT ERROR?
+            if (res == lpdeckh && lpdeck.size() > 0)
+            {
+                //tiebreaker
+                if (!Breaktie(res))
+                    retval = 4;
+            }
+
+            if (retval == 0)
+            {
+                for (int i = 0; i < tdeck.size(); i++)
+                    decktouse.RemoveCard(tdeck.GetCard(i).CV, tdeck.GetCard(i).SV);
+            }
 
 
             return retval;
+        }
+
+        public bool Breaktie(Hand tdeckh)
+        {
+            lpdeck.OrderCards();
+            tdeck.OrderCards(); 
+            
+            bool retval = false;
+            Card thigh = highcard(tdeck);
+            Card lphigh = highcard(lpdeck);
+
+            if (tdeckh == Hand.straight_flush)
+            {
+                //Played cards are higher values straight flush
+                if (tdeck.GetCard(0).SV == lpdeck.GetCard(0).SV &&
+                    tdeck.GetCard(0).CV > lpdeck.GetCard(0).CV || tdeck.GetCard(0).SV > lpdeck.GetCard(0).SV)
+                        retval = true;
+            }
+            else if (tdeckh == Hand.four_kind)
+            {
+                //Played cards are higher values
+                if (tdeck.GetCard(0).CV > lpdeck.GetCard(0).CV)
+                    retval = true;
+            }
+            else if (tdeckh == Hand.full_house)
+            {
+                Deck ntriple = new Deck();
+                //0,1,2 are the "triple"
+                if (tdeck.GetCard(0).CV == tdeck.GetCard(1).CV && tdeck.GetCard(1).CV == tdeck.GetCard(2).CV)
+                {
+                    for (int i = 0; i < 3; i++)
+                        ntriple.SetCard(tdeck.GetCard(i).CV, tdeck.GetCard(i).SV);
+                }
+                //2,3,4 are the "triple"
+                else 
+                {
+                    for (int i = 2; i < 5; i++)
+                        ntriple.SetCard(tdeck.GetCard(i).CV, tdeck.GetCard(i).SV);
+                }
+
+                Deck otriple = new Deck();
+                //0,1,2 are the "triple"
+                if (lpdeck.GetCard(0).CV == lpdeck.GetCard(1).CV && lpdeck.GetCard(1).CV == lpdeck.GetCard(2).CV)
+                {
+                    for (int i = 0; i < 3; i++)
+                        otriple.SetCard(lpdeck.GetCard(i).CV, lpdeck.GetCard(i).SV);
+                }
+                //2,3,4 are the "triple"
+                else
+                {
+                    for (int i = 2; i < 5; i++)
+                        otriple.SetCard(lpdeck.GetCard(i).CV, lpdeck.GetCard(i).SV);
+                }
+
+                if (ntriple.GetCard(0).CV > otriple.GetCard(0).CV)
+                    retval = true;
+            }
+            else if (tdeckh == Hand.flush)
+            {
+                if (tdeck.GetCard(0).SV > lpdeck.GetCard(0).SV
+                    || tdeck.GetCard(0).SV == lpdeck.GetCard(0).SV && 
+                       thigh.CV > lphigh.CV)
+                    retval = true;
+            }
+            else if (tdeckh == Hand.straight)
+            {
+                if (thigh.CV > lphigh.CV
+                    || thigh.CV == lphigh.CV &&
+                       thigh.SV > lphigh.SV)
+                    retval = true;
+            }
+            else if (tdeckh == Hand.three_kind)
+            {
+                if (thigh.CV > lphigh.CV)
+                    retval = true;
+            }
+            else
+            {
+                if (thigh.CV > lphigh.CV || thigh.CV == lphigh.CV && thigh.SV > lphigh.SV)
+                    retval = true;
+            }
+
+            return retval;
+        }
+
+        Card highcard(Deck deck)
+        {
+            Card hc = deck.GetCard(0);
+
+            for (int i = 1; i < deck.size(); i++)
+            {
+                if (deck.GetCard(i).CV > hc.CV ||
+                    deck.GetCard(i).CV == hc.CV &&
+                    deck.GetCard(i).SV > hc.SV)
+                        hc = deck.GetCard(i);
+            }
+
+            return hc;
         }
 
         public bool isFlush()
@@ -221,11 +331,20 @@ namespace PresidentsServer
             tdeck2.SetCard(tdeck.GetCard(1).CV, tdeck.GetCard(0).SV);
 
             Deck tdeck3 = new Deck();
-            tdeck2.SetCard(tdeck.GetCard(2).CV, tdeck.GetCard(0).SV);
-            tdeck2.SetCard(tdeck.GetCard(3).CV, tdeck.GetCard(0).SV);
-            tdeck2.SetCard(tdeck.GetCard(4).CV, tdeck.GetCard(0).SV);
+            tdeck3.SetCard(tdeck.GetCard(2).CV, tdeck.GetCard(0).SV);
+            tdeck3.SetCard(tdeck.GetCard(3).CV, tdeck.GetCard(0).SV);
+            tdeck3.SetCard(tdeck.GetCard(4).CV, tdeck.GetCard(0).SV);
 
-            if (Multiples(tdeck2) && Multiples(tdeck3))
+            Deck tdeck4 = new Deck();
+            tdeck4.SetCard(tdeck.GetCard(0).CV, tdeck.GetCard(0).SV);
+            tdeck4.SetCard(tdeck.GetCard(1).CV, tdeck.GetCard(0).SV);
+            tdeck4.SetCard(tdeck.GetCard(2).CV, tdeck.GetCard(0).SV);
+
+            Deck tdeck5 = new Deck();
+            tdeck5.SetCard(tdeck.GetCard(3).CV, tdeck.GetCard(0).SV);
+            tdeck5.SetCard(tdeck.GetCard(4).CV, tdeck.GetCard(0).SV);
+
+            if (Multiples(tdeck2) && Multiples(tdeck3) || Multiples(tdeck4) && Multiples(tdeck5))
                 return true;
 
             return false;
@@ -376,12 +495,19 @@ namespace PresidentsServer
 
             for (int i = 0; i < lpdeck.size(); i++)
             {
-                System.Buffer.BlockCopy(lpdeck.GetCard(i).name.ToCharArray(), 0, cards, size * i, size);
+                string cardstring = lpdeck.GetCard(i).name + ',';
+                System.Buffer.BlockCopy(cardstring.ToCharArray(), 0, cards, size * i, cardstring.Length);
             }
 
-            System.Buffer.BlockCopy("||+".ToCharArray(), 0, cards, size * (lpdeck.size() - 1), "||+".ToCharArray().Length);
+            System.Buffer.BlockCopy("||+".ToCharArray(), 0, cards, size + 1 * lpdeck.size(), "||+".ToCharArray().Length);
 
             return cards;
+        }
+
+        public void ResetLP()
+        {
+            lpdeck.empty();
+            lpdeckh = Hand.error;
         }
 
         public bool Checkwin()

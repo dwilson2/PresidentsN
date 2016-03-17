@@ -35,7 +35,7 @@ namespace PresidentsServer
 
                 do
                 {
-                    byteCount += clients[clientnum].Send(move, 0, size, SocketFlags.None);
+                    byteCount += clients[clientnum].Send(move, byteCount, (size-byteCount), SocketFlags.None);
                 } while (byteCount < size);
             }
 
@@ -59,14 +59,22 @@ namespace PresidentsServer
 
             try
             {
-
+                clients[clientnum].ReceiveTimeout = 10000;
                 clients[clientnum].Receive(Messagesize, 0, Messagesize.Length, SocketFlags.None);
 
                 int size = BitConverter.ToInt32(Messagesize, 0);
 
+                if (size == 0)
+                {
+                    Byte[] resp = new byte[2 * sizeof(char)];
+                    System.Buffer.BlockCopy("E5".ToCharArray(), 0, resp, 0, resp.Length);
+                    SendResponse(clientnum, resp);
+                }
+
+
                 do
                 {
-                    byteCount += clients[clientnum].Receive(message, 0, size, SocketFlags.None);
+                    byteCount += clients[clientnum].Receive(message, byteCount, (size-byteCount), SocketFlags.None);
                 } while (byteCount < size);
             }
 
@@ -160,6 +168,23 @@ namespace PresidentsServer
            {
                byte[] movebuff = new byte[4096];
                RecieveMove(turn, movebuff);
+
+               char[] chars = new char[movebuff.Length / sizeof(char)];
+               System.Buffer.BlockCopy(movebuff, 0, chars, 0, movebuff.Length);
+               string charst = new string(chars);
+
+               if (charst == "Pass")
+               {
+                   if (turn == 1)
+                       turn = 0;
+                   else
+                       turn = 1;
+
+
+                   G.ResetLP();
+                   continue;
+               }
+
                string[] cards = ProcessMessage(movebuff);
 
                int ec = G.VerifyHand(cards, turn);
@@ -175,22 +200,33 @@ namespace PresidentsServer
                    SendResponse(0, lp);
                    SendResponse(0, p1);
                    SendResponse(1, lp);
-                   SendResponse(1, p2);
-
-                   if (turn == 1) 
-                       turn = 0;
-                   else
-                       turn = 1;
+                   SendResponse(1, p2); 
                }
                else
                {
-                   Byte[] resp = BitConverter.GetBytes('E' + ec);
+                   char echar = Convert.ToChar(ec);
+                   string msg = "E" + echar;
+                   Byte[] resp = new byte[2 * sizeof(char)];
+                   System.Buffer.BlockCopy(msg.ToCharArray(), 0, resp, 0, resp.Length);
                    SendResponse(turn, resp);
                }
 
                winindicator = G.Checkwin();
 
+               if (!winindicator && ec == 0)
+               {
+                   if (turn == 1)
+                       turn = 0;
+                   else
+                       turn = 1;
+               }
+
            } while (winindicator != true);
+
+           string winmsg = "WIN";
+           byte[] winresp = new byte[winmsg.Length * sizeof(char)];
+           System.Buffer.BlockCopy(winmsg.ToCharArray(), 0, winresp, 0, winmsg.Length);
+           SendResponse(turn, winresp);
 
             for (int i = 0; i < clients.Length; i++)
             {

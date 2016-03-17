@@ -1,0 +1,10 @@
+E:\Senior Project\PresidentsGame\PresidentsGame\bin\Release\PresidentsGame.exe.config
+E:\Senior Project\PresidentsGame\PresidentsGame\bin\Release\PresidentsGame.exe
+E:\Senior Project\PresidentsGame\PresidentsGame\bin\Release\PresidentsGame.pdb
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Release\PresidentsGame.csprojResolveAssemblyReference.cache
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Release\PresidentsGame.EntryScreen.resources
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Release\PresidentsGame.Properties.Resources.resources
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Release\PresidentsGame.ClientForm.resources
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Release\PresidentsGame.csproj.GenerateResource.Cache
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Release\PresidentsGame.exe
+E:\Senior Project\PresidentsGame\PresidentsGame\obj\Release\PresidentsGame.pdb

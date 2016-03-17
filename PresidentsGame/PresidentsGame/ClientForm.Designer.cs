@@ -104,6 +104,7 @@
             this.Pass.TabIndex = 1;
             this.Pass.Text = "Pass";
             this.Pass.UseVisualStyleBackColor = true;
+            this.Pass.Click += new System.EventHandler(this.Pass_Click);
             // 
             // Deal
             // 
@@ -178,7 +179,7 @@
             // 
             // C26
             // 
-            this.C26.active = true;
+            this.C26.active = false;
             this.C26.Location = new System.Drawing.Point(544, 229);
             this.C26.Margin = new System.Windows.Forms.Padding(2);
             this.C26.Name = "C26";
@@ -188,7 +189,7 @@
             // 
             // C13
             // 
-            this.C13.active = true;
+            this.C13.active = false;
             this.C13.Location = new System.Drawing.Point(544, 151);
             this.C13.Margin = new System.Windows.Forms.Padding(2);
             this.C13.Name = "C13";
@@ -198,7 +199,7 @@
             // 
             // C25
             // 
-            this.C25.active = true;
+            this.C25.active = false;
             this.C25.Location = new System.Drawing.Point(501, 229);
             this.C25.Margin = new System.Windows.Forms.Padding(2);
             this.C25.Name = "C25";
@@ -208,7 +209,7 @@
             // 
             // C12
             // 
-            this.C12.active = true;
+            this.C12.active = false;
             this.C12.Location = new System.Drawing.Point(501, 151);
             this.C12.Margin = new System.Windows.Forms.Padding(2);
             this.C12.Name = "C12";
@@ -218,7 +219,7 @@
             // 
             // C24
             // 
-            this.C24.active = true;
+            this.C24.active = false;
             this.C24.Location = new System.Drawing.Point(458, 229);
             this.C24.Margin = new System.Windows.Forms.Padding(2);
             this.C24.Name = "C24";
@@ -228,7 +229,7 @@
             // 
             // C11
             // 
-            this.C11.active = true;
+            this.C11.active = false;
             this.C11.Location = new System.Drawing.Point(458, 151);
             this.C11.Margin = new System.Windows.Forms.Padding(2);
             this.C11.Name = "C11";
@@ -238,7 +239,7 @@
             // 
             // C23
             // 
-            this.C23.active = true;
+            this.C23.active = false;
             this.C23.Location = new System.Drawing.Point(414, 229);
             this.C23.Margin = new System.Windows.Forms.Padding(2);
             this.C23.Name = "C23";
@@ -248,7 +249,7 @@
             // 
             // C10
             // 
-            this.C10.active = true;
+            this.C10.active = false;
             this.C10.Location = new System.Drawing.Point(414, 151);
             this.C10.Margin = new System.Windows.Forms.Padding(2);
             this.C10.Name = "C10";
@@ -258,7 +259,7 @@
             // 
             // C22
             // 
-            this.C22.active = true;
+            this.C22.active = false;
             this.C22.Location = new System.Drawing.Point(370, 229);
             this.C22.Margin = new System.Windows.Forms.Padding(2);
             this.C22.Name = "C22";
@@ -268,7 +269,7 @@
             // 
             // C9
             // 
-            this.C9.active = true;
+            this.C9.active = false;
             this.C9.Location = new System.Drawing.Point(370, 151);
             this.C9.Margin = new System.Windows.Forms.Padding(2);
             this.C9.Name = "C9";
@@ -278,7 +279,7 @@
             // 
             // C21
             // 
-            this.C21.active = true;
+            this.C21.active = false;
             this.C21.Location = new System.Drawing.Point(327, 229);
             this.C21.Margin = new System.Windows.Forms.Padding(2);
             this.C21.Name = "C21";
@@ -288,7 +289,7 @@
             // 
             // C8
             // 
-            this.C8.active = true;
+            this.C8.active = false;
             this.C8.Location = new System.Drawing.Point(327, 151);
             this.C8.Margin = new System.Windows.Forms.Padding(2);
             this.C8.Name = "C8";
@@ -298,7 +299,7 @@
             // 
             // C20
             // 
-            this.C20.active = true;
+            this.C20.active = false;
             this.C20.Location = new System.Drawing.Point(284, 229);
             this.C20.Margin = new System.Windows.Forms.Padding(2);
             this.C20.Name = "C20";
@@ -308,7 +309,7 @@
             // 
             // C7
             // 
-            this.C7.active = true;
+            this.C7.active = false;
             this.C7.Location = new System.Drawing.Point(284, 151);
             this.C7.Margin = new System.Windows.Forms.Padding(2);
             this.C7.Name = "C7";
@@ -318,7 +319,7 @@
             // 
             // C19
             // 
-            this.C19.active = true;
+            this.C19.active = false;
             this.C19.Location = new System.Drawing.Point(241, 229);
             this.C19.Margin = new System.Windows.Forms.Padding(2);
             this.C19.Name = "C19";
@@ -328,7 +329,7 @@
             // 
             // C6
             // 
-            this.C6.active = true;
+            this.C6.active = false;
             this.C6.Location = new System.Drawing.Point(241, 151);
             this.C6.Margin = new System.Windows.Forms.Padding(2);
             this.C6.Name = "C6";
@@ -338,7 +339,7 @@
             // 
             // C18
             // 
-            this.C18.active = true;
+            this.C18.active = false;
             this.C18.Location = new System.Drawing.Point(197, 229);
             this.C18.Margin = new System.Windows.Forms.Padding(2);
             this.C18.Name = "C18";
@@ -348,7 +349,7 @@
             // 
             // C5
             // 
-            this.C5.active = true;
+            this.C5.active = false;
             this.C5.Location = new System.Drawing.Point(197, 151);
             this.C5.Margin = new System.Windows.Forms.Padding(2);
             this.C5.Name = "C5";
@@ -358,7 +359,7 @@
             // 
             // C17
             // 
-            this.C17.active = true;
+            this.C17.active = false;
             this.C17.Location = new System.Drawing.Point(154, 229);
             this.C17.Margin = new System.Windows.Forms.Padding(2);
             this.C17.Name = "C17";
@@ -368,7 +369,7 @@
             // 
             // C4
             // 
-            this.C4.active = true;
+            this.C4.active = false;
             this.C4.Location = new System.Drawing.Point(154, 151);
             this.C4.Margin = new System.Windows.Forms.Padding(2);
             this.C4.Name = "C4";
@@ -378,7 +379,7 @@
             // 
             // C16
             // 
-            this.C16.active = true;
+            this.C16.active = false;
             this.C16.Location = new System.Drawing.Point(111, 229);
             this.C16.Margin = new System.Windows.Forms.Padding(2);
             this.C16.Name = "C16";
@@ -388,7 +389,7 @@
             // 
             // C3
             // 
-            this.C3.active = true;
+            this.C3.active = false;
             this.C3.Location = new System.Drawing.Point(111, 151);
             this.C3.Margin = new System.Windows.Forms.Padding(2);
             this.C3.Name = "C3";
@@ -398,7 +399,7 @@
             // 
             // C15
             // 
-            this.C15.active = true;
+            this.C15.active = false;
             this.C15.Location = new System.Drawing.Point(68, 229);
             this.C15.Margin = new System.Windows.Forms.Padding(2);
             this.C15.Name = "C15";
@@ -408,7 +409,7 @@
             // 
             // C2
             // 
-            this.C2.active = true;
+            this.C2.active = false;
             this.C2.Location = new System.Drawing.Point(68, 151);
             this.C2.Margin = new System.Windows.Forms.Padding(2);
             this.C2.Name = "C2";
@@ -418,7 +419,7 @@
             // 
             // C14
             // 
-            this.C14.active = true;
+            this.C14.active = false;
             this.C14.Location = new System.Drawing.Point(24, 229);
             this.C14.Margin = new System.Windows.Forms.Padding(2);
             this.C14.Name = "C14";
@@ -428,7 +429,7 @@
             // 
             // C1
             // 
-            this.C1.active = true;
+            this.C1.active = false;
             this.C1.Location = new System.Drawing.Point(24, 151);
             this.C1.Margin = new System.Windows.Forms.Padding(2);
             this.C1.Name = "C1";

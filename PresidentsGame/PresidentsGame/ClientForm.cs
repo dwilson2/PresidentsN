@@ -36,6 +36,39 @@ namespace PresidentsGame
             PopulateCardVP();
             connection = new ClientConnect();
             cards = new byte[4096];
+
+            main();
+        }
+
+        public void main()
+        {
+            byte[] resp = new byte[4096];
+            connection.RecvResponse(resp);
+
+            string result = System.Text.Encoding.UTF8.GetString(resp).Substring(0, resp.Length);
+            result = result.Replace(" ", string.Empty);
+
+            //The first message contains either an error or The last played cards
+            char delimiter = ',';
+            String[] pcards = result.Split(delimiter);
+
+            DrawPlayerCards(pcards);
+
+            byte[] turnp = new byte[sizeof(char)];
+            connection.RecvResponse(turnp);
+
+            char[] chars = new char[sizeof(char)];
+            System.Buffer.BlockCopy(turnp, 0, chars, 0, sizeof(char));
+            string charst = new string(chars);
+
+            if (charst != "T")
+                Play.Enabled = false;
+
+            while(true) {
+
+                HandleResponse();
+            }
+
         }
 
         public static void PopulateCardVP()
@@ -124,7 +157,6 @@ namespace PresidentsGame
 
         private void SoloForm_Load(object sender, EventArgs ev)
         {
-            HandleResponse();
         }
 
         private void Deal_Click(object sender, EventArgs e)
@@ -192,6 +224,17 @@ namespace PresidentsGame
             byte[] resp = new byte [4096];
             connection.RecvResponse(resp);
 
+            string winresult = System.Text.Encoding.UTF8.GetString(resp).Substring(0, 3);
+            
+            if (winresult == "WIN")
+            {
+                //Display some kind of win form
+                //ClientForm C1 = new ClientForm();
+                //C1.Show();
+                //this.Hide();
+                return;
+            }
+
             string result = System.Text.Encoding.UTF8.GetString(resp).Substring(0, resp.Length);
             result = result.Replace(" ", string.Empty);
 
@@ -202,7 +245,7 @@ namespace PresidentsGame
             Char delimiter = ',';
             String[] messages = result.Substring(messages1[0].Length,result.Length).Split(delimiter);
 
-            if (messages1[0].Substring(0, 1) == "E")
+            if (messages1[0].Substring(0, 1) == "E" && Play.Enabled == true)
             {
                 HandleError(messages1);
             }
@@ -210,6 +253,11 @@ namespace PresidentsGame
             {
                 DrawPlayerCards(messages);
                 DrawPlayedCards(messages1[0].Split(delimiter));
+
+                if (Play.Enabled == false)
+                    Play.Enabled = true;
+                else
+                    Play.Enabled = false;
             }
         }
 
@@ -263,7 +311,6 @@ namespace PresidentsGame
             Clear();
 
             connection.SendCards(cards.ToString());
-            HandleResponse();
             Array.Clear(cards, 0, 4096);
         }
 
@@ -427,6 +474,11 @@ namespace PresidentsGame
         private void C26_Click(object sender, EventArgs e)
         {
             C26.Invalidate();
+        }
+
+        private void Pass_Click(object sender, EventArgs e)
+        {
+            connection.SendCards("Pass");
         }
 
     }
