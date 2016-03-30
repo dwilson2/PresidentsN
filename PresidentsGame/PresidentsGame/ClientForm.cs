@@ -11,12 +11,43 @@ using System.Windows.Forms;
 using System.Reflection;
 using System.IO;
 using System.Collections;
+using System.Threading;
 
+//
+// Class to update player form and allow player to play moves (validated by server)
+//
 namespace PresidentsGame
 {
-
     public partial class ClientForm : Form
     {
+        //Global objects
+        public static List<DrawInfo> Carddraw;
+        public static Dictionary<string, Bitmap> CardImages;
+        public static Dictionary<int, string> ErrorCodes;
+        public static ClientConnect connection;
+        public static byte[] cards;
+
+        /**/
+        /*
+        public ClientForm()
+        
+        NAME
+            public ClientForm() - constructor for clientform
+        
+        SYNOPSIS
+            public ClientForm()
+                  
+         DESCRIPTION
+            Creates instances of necessary objects (globals) and populates them with data. 
+            Creates a seperate thread to constantly interact with the server. (Ensures GUI is always responsive).
+         
+         RETURNS
+            A ClientForm object
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         public ClientForm()
         {
             InitializeComponent();
@@ -37,40 +68,123 @@ namespace PresidentsGame
             connection = new ClientConnect();
             cards = new byte[4096];
 
-            main();
+            Thread mThread = new Thread(new ThreadStart(main));
+            mThread.Start();
         }
 
+        /**/
+        /*
+         public void main()        
+         
+        NAME
+            public void main() - 
+        
+        SYNOPSIS
+             public void main() - This is the function that allows the game to be played utilizes multiple threads to ensure
+             Main thread does the GUI work and other thread performs all other processing.
+                  
+         DESCRIPTION
+            1. Receive an initial message which contains the cards a player begins the game with
+            2. Receive the message that informs the player whether or not he has the first turn
+            3. Continue to listen for messages in order to play the game
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         public void main()
         {
             byte[] resp = new byte[4096];
-            connection.RecvResponse(resp);
+            connection.RecvResponse(ref resp);
 
-            string result = System.Text.Encoding.UTF8.GetString(resp).Substring(0, resp.Length);
-            result = result.Replace(" ", string.Empty);
+            string result = ClientConnect.GetString(resp);
+            result = result.Substring(0, result.Length - 1);
 
-            //The first message contains either an error or The last played cards
             char delimiter = ',';
             String[] pcards = result.Split(delimiter);
 
             DrawPlayerCards(pcards);
 
             byte[] turnp = new byte[sizeof(char)];
-            connection.RecvResponse(turnp);
+            connection.RecvResponse(ref turnp);
 
-            char[] chars = new char[sizeof(char)];
-            System.Buffer.BlockCopy(turnp, 0, chars, 0, sizeof(char));
-            string charst = new string(chars);
+            string charst = ClientConnect.GetString(turnp);
 
-            if (charst != "T")
-                Play.Enabled = false;
+            switchplay(charst);
 
-            while(true) {
-
+            while (true)
+            {
                 HandleResponse();
+            }
+        }
+
+        //delegate for a function with a single string argument (used for switchplay)
+        delegate void sDelegate(string t);
+
+        /**/
+        /*
+         private void switchplay (string t)        
+         
+        NAME
+            private void switchplay (string t) - Activates/ Deactivates play button to begin turn taking
+        
+        SYNOPSIS
+            private void switchplay (string t)
+         
+            string t - A string indicating whether or not it is a player's turn (T - yes)
+      
+         DESCRIPTION
+            Enables or disables play button to enable turn taking. Uses delegates to ensure only the Main thread
+            attempts to make changes to the GUI.
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
+        private void switchplay (string t)
+        {
+            if (this.InvokeRequired == false)
+            {
+                if (t != "T")
+                    Play.Enabled = false;
+            }
+            else
+            {
+                sDelegate switchp =
+                  new sDelegate(switchplay);
+                this.Invoke(switchp, new object[] {t});
             }
 
         }
 
+        /**/
+        /*
+         public static void PopulateCardVP()      
+         
+        NAME
+           public static void PopulateCardVP() - Populates the CardImages Dictionary so that given a name, 
+           the ClientForm knows what image to draw,
+        
+        SYNOPSIS
+            public static void PopulateCardVP()     
+      
+         DESCRIPTION
+            Iterates through all cards from the Ace of diamonds to the king of spades populating the
+            cardImages dictionary with images saved in the forms resources folder.
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         public static void PopulateCardVP()
         {
             for (int i = 1; i <= 13; i++)
@@ -105,9 +219,30 @@ namespace PresidentsGame
             }
         }
 
-        //This function will change to instead taking in
-        //a vector of strings and using the cardImages dictionary to figure out which images 
-        //should be drawn
+        /**/
+        /*
+         public void DrawPlayerCards(string[] playercards)      
+         
+        NAME
+           public void DrawPlayerCards(string[] playercards) - Update the form with the player's current cards.
+        
+        SYNOPSIS
+            public void DrawPlayerCards(string[] playercards) 
+         
+            string[] playercards - An array of strings containing the name of each of the player's cards
+         
+            Note: Image obtained using name from CardImages dictionary
+      
+         DESCRIPTION
+            Iterates through all player's cards providing the info to the Carddraw object. Call Invalidate to draw at the end.
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         public void DrawPlayerCards(string[] playercards)
         {
             //Draw the player's cards on the screen
@@ -128,13 +263,33 @@ namespace PresidentsGame
                 CC = this.GetNextControl(CC, true);
             }
 
-            ActiveForm.Invalidate();
+            this.Invalidate();
         }
 
-        //If a move is not an error move a player's selected cards into the last played
-        //From last played they simply get overridden, after a players turn,
-        //draw the cards they have remaining in their hand and wait to recieve messages
-        //indicating what their opponent played
+        /**/
+        /*
+         public void DrawPlayedCards(string[] playedcards)     
+         
+        NAME
+           public void DrawPlayedCards(string[] playedcards) - Update the form with the most recently played cards.
+        
+        SYNOPSIS
+            public void DrawPlayedCards(string[] playedcards) 
+         
+            string[] playedcards - An array of strings containing the name of each of the cards which were just played.
+         
+            Note: Image obtained using name from CardImages dictionary
+      
+         DESCRIPTION
+            Iterates through all cards just played providing the info to the Carddraw object. Call Invalidate to draw at the end.
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         public void DrawPlayedCards(string[] playedcards)
         {
             DrawInfo cardpos = new DrawInfo();
@@ -152,17 +307,44 @@ namespace PresidentsGame
                 CC = this.GetNextControl(CC, true);
             }
 
-            ActiveForm.Invalidate();
+           // this.Invalidate();
         }
 
         private void SoloForm_Load(object sender, EventArgs ev)
         {
         }
 
+        //Eventually if someone has won enable the ability to restart or automatically restart?
         private void Deal_Click(object sender, EventArgs e)
         {
         }
- 
+
+        /**/
+        /*
+          private void SoloForm_Paint(object sender, PaintEventArgs e)     
+         
+        NAME
+            private void SoloForm_Paint(object sender, PaintEventArgs e) - Redraws the form using the last played and
+            player cards.
+        
+        SYNOPSIS
+            private void SoloForm_Paint(object sender, PaintEventArgs e)   
+         
+            object sender - required arguments for paint function event handler
+            PaintEventArgs e - ""
+      
+         DESCRIPTION
+            Draws all the cards populated in the DrawInfo array DrawArray 
+            
+            Note: Automatically called when using invalidate() function
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         private void SoloForm_Paint(object sender, PaintEventArgs e)
         {
             DrawInfo cardpos = new DrawInfo();
@@ -184,6 +366,28 @@ namespace PresidentsGame
             }
         }
 
+        /**/
+        /*
+          private void HandleError(String[] messages)    
+         
+        NAME
+            private void HandleError(String[] messages) - Informs user of error in played cards (invalid move of some sort).
+        
+        SYNOPSIS
+            private void HandleError(String[] messages) 
+         
+            String[] messages - An array of messages representing the response from the server (in this case the error code).
+      
+         DESCRIPTION
+            Uses message boxes to tell the user why their move was invalid
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         private void HandleError(String[] messages)
         {
             //Single character ( 0-4 indicating error code)
@@ -219,12 +423,83 @@ namespace PresidentsGame
             MessageBox.Show(message);
         }
 
+        //delegate for a function with a single string argument (used for switchplay)
+        delegate void mDelegate(String[] messages, String[] messages1);
+
+        /**/
+        /*
+        private void Drawc(String[] messages, String[] messages1)         
+        
+         NAME
+            private void Drawc(String[] messages, String[] messages1) - Safely calls the functions to draw cards to the screen
+        
+        SYNOPSIS
+            private void Drawc(String[] messages, String[] messages1)
+         
+            String[] messages - A list of the cards in the previous player's move
+            String[] messages1 - A list of the cards left in a player's hand (comma seperated)
+      
+         DESCRIPTION
+            Ensures the draw functions defined above are called by the Main thread
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
+        private void Drawc(String[] messages, String[] messages1)
+        {
+            if (this.InvokeRequired == false)
+            {
+
+                DrawPlayerCards(messages);
+                DrawPlayedCards(messages1[0].Split(','));
+
+                if (Play.Enabled == false)
+                    Play.Enabled = true;
+                else
+                    Play.Enabled = false;
+            }
+            else
+            {
+                mDelegate Draw =
+                  new mDelegate(Drawc);
+                this.Invoke(Draw, new object[] { messages, messages1 });
+            }
+        }
+
+        /**/
+        /*
+         private void HandleResponse()        
+        
+         NAME
+            private void HandleResponse()  - Waits for a message from the server and either displays the errors or redraws 
+                                             the form to reflect the updated state of the game.
+        
+        SYNOPSIS
+            private void HandleResponse() 
+         
+         DESCRIPTION
+            1. Recieves a message from the server
+            2. Determines if a player has won the game
+            3. Divides the message into its pieces
+            4. Updates the status of the game.
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         private void HandleResponse()
         {
             byte[] resp = new byte [4096];
-            connection.RecvResponse(resp);
+            connection.RecvResponse(ref resp);
 
-            string winresult = System.Text.Encoding.UTF8.GetString(resp).Substring(0, 3);
+            string winresult = ClientConnect.GetString(resp).Substring(0, 3);
             
             if (winresult == "WIN")
             {
@@ -235,15 +510,14 @@ namespace PresidentsGame
                 return;
             }
 
-            string result = System.Text.Encoding.UTF8.GetString(resp).Substring(0, resp.Length);
-            result = result.Replace(" ", string.Empty);
+            string result = ClientConnect.GetString(resp);
 
             //The first message contains either an error or The last played cards
             char[] delimiter1 = { '|', '|', '+' };
             String[] messages1 = result.Split(delimiter1);
 
             Char delimiter = ',';
-            String[] messages = result.Substring(messages1[0].Length,result.Length).Split(delimiter);
+            String[] messages = result.Substring(messages1[0].Length, (result.Length - messages1[0].Length) ).Split(delimiter);
 
             if (messages1[0].Substring(0, 1) == "E" && Play.Enabled == true)
             {
@@ -251,23 +525,11 @@ namespace PresidentsGame
             }
             else
             {
-                DrawPlayerCards(messages);
-                DrawPlayedCards(messages1[0].Split(delimiter));
-
-                if (Play.Enabled == false)
-                    Play.Enabled = true;
-                else
-                    Play.Enabled = false;
+                Drawc(messages, messages1);
             }
         }
 
-        //Global objects
-        public static List<DrawInfo> Carddraw;
-        public static Dictionary<string, Bitmap> CardImages;
-        public static Dictionary<int,string> ErrorCodes;
-        public static ClientConnect connection;
-        public static byte[] cards;
-
+        //Data needed to draw images 
         public struct DrawInfo
         {
             public int x { get; set; }
@@ -275,6 +537,30 @@ namespace PresidentsGame
             public Bitmap img { get; set; }
         }
 
+        /**/
+        /*
+         private void Play_Click(object sender, EventArgs e)       
+        
+         NAME
+            private void Play_Click(object sender, EventArgs e) - Checks which cards the user wants to play and builds up message
+                                                                  to send to server.
+        
+        SYNOPSIS
+            private void Play_Click(object sender, EventArgs e)
+         
+            object sender - required arguments for event handler
+            EventArgs e - ""
+         
+         DESCRIPTION
+            Check TransParentMessagePanels add active panels to message (since that indicates card will be played).
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         private void Play_Click(object sender, EventArgs e)
         {
             //If the card is selected put it in the deck (find out which are selected by looking at
@@ -314,6 +600,26 @@ namespace PresidentsGame
             Array.Clear(cards, 0, 4096);
         }
 
+        /**/
+        /*
+         private void Clear()     
+        
+         NAME
+            private void Clear() - Redraws all messagepanels as not active to deselect card at location.
+        
+        SYNOPSIS
+            private void Clear()
+         
+         DESCRIPTION
+            Redraws each panel that was selected previously.
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         private void Clear()
         {
             if (C1.active == true) C1.Invalidate();
@@ -344,11 +650,38 @@ namespace PresidentsGame
             if (C26.active == true) C26.Invalidate();
         }
 
+        /**/
+        /*
+         public static void Settmp(int index)    
+        
+         NAME
+            public static void Settmp(int index)
+        
+        SYNOPSIS
+            public static void Settmp(int index)
+          
+            int index - The index of the selected card to be added to the message.         
+         
+         DESCRIPTION
+            Adds an index to the array which eventually is a message sent to the server.
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         public static void Settmp(int index)
         {
-            cards.SetValue(BitConverter.GetBytes(index)+",",cards.Length);
+            string ostring = ClientConnect.GetString(cards);
+            ostring = ostring.Replace("\0", string.Empty);
+
+            string str = index.ToString() + ',';
+            System.Buffer.BlockCopy(str.ToCharArray(), 0, cards, ostring.Length, str.Length);
         }
- 
+        
+        //Event handler for each transparent message panel to change color and property to active
         private void C1_Click(object sender, EventArgs e)
         {
             C1.Invalidate();

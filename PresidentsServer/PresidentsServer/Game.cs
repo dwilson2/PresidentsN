@@ -475,13 +475,14 @@ namespace PresidentsServer
             byte[] cards = new byte[4096];
 
             Deck decktouse = (turn == 0  ? AIdeck : pdeck);
-
-            int size = decktouse.GetCard(0).name.ToCharArray().Length;
+            int offset = 0;
 
             for (int i = 0; i < decktouse.size(); i++)
             {
                 string cardstring = decktouse.GetCard(i).name + ',';
-                System.Buffer.BlockCopy(cardstring.ToCharArray(), 0, cards, size * i, cardstring.Length);
+                var c = Encoding.UTF8.GetBytes(cardstring);
+                System.Buffer.BlockCopy(c, 0, cards, offset, cardstring.Length);
+                offset += cardstring.Length;
             }
 
                 return cards;
@@ -493,13 +494,18 @@ namespace PresidentsServer
 
             int size = lpdeck.GetCard(0).name.ToCharArray().Length;
 
+            int offset = 0;
+
             for (int i = 0; i < lpdeck.size(); i++)
             {
                 string cardstring = lpdeck.GetCard(i).name + ',';
-                System.Buffer.BlockCopy(cardstring.ToCharArray(), 0, cards, size * i, cardstring.Length);
+                var c = Encoding.UTF8.GetBytes(cardstring);
+                System.Buffer.BlockCopy(c, 0, cards, offset, cardstring.Length);
+                offset += cardstring.Length;
             }
 
-            System.Buffer.BlockCopy("||+".ToCharArray(), 0, cards, size + 1 * lpdeck.size(), "||+".ToCharArray().Length);
+            var sep = Encoding.UTF8.GetBytes("||+");
+            System.Buffer.BlockCopy(sep, 0, cards, size + 1 * lpdeck.size(), sep.Length);
 
             return cards;
         }

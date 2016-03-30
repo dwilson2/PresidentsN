@@ -18,6 +18,72 @@ namespace PresidentsServer
            , ProtocolType.Tcp);
 
         public static Socket[] clients = new Socket[numplayers];
+
+        /**/
+        /*
+        static byte[] GetBytes(string str)
+        
+        NAME
+            GetBytes - converts a string into an array of bytes.
+        
+        SYNOPSIS
+            static byte[] GetBytes(string str)
+         
+            str     --> the string to be converted.
+         
+         DESCRIPTION
+            Because sockets send information back and forth as arrays of bytes,
+            throughout the program it is necessary to convert back and forth between strings, arrays of bytes,
+            and arrays of strings. This function will be used by both the clients and server to convert a string into bytes.
+         
+         RETURNS
+            An array of bytes holding the equivalent data that was in string str.
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
+        public static byte[] GetBytes(string str)
+        {
+            byte[] bytes = new byte[str.Length * sizeof(char)];
+            System.Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
+            return bytes;
+        }
+
+        /**/
+        /*
+        static string GetString(byte[] bytes)
+        
+        NAME
+            GetBytes - converts a string into an array of bytes.
+        
+        SYNOPSIS
+           static string GetString(byte[] bytes)
+         
+            bytes     --> An array of bytes to be converted.
+         
+         DESCRIPTION
+            Because sockets send information back and forth as arrays of bytes,
+            throughout the program it is necessary to convert back and forth between strings, arrays of bytes,
+            and arrays of strings. This function will be used by both the clients and server to convert an array of bytes into a single string.
+         
+         RETURNS
+            A string that holds the equivalent data that was in the bytes array.
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
+        public static string GetString(byte[] bytes)
+        {
+            char[] chars = new char[bytes.Length / sizeof(char)];
+            System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
+
+            string charst = new string(chars);
+            charst = charst.Replace("\0", string.Empty);
+
+            return charst;
+        }
         
         //Either cards (what's left in the deck to be drawn) 
         //or an error code (indicating an invalid move)
@@ -49,7 +115,7 @@ namespace PresidentsServer
         }
 
         //A list of positions which correspond to cards in their deck
-        static int RecieveMove(int clientnum, byte[] movebuff)
+        static int RecieveMove(int clientnum, ref byte[] movebuff)
         {
             int byteCount = 0;
 
@@ -92,7 +158,7 @@ namespace PresidentsServer
         {
             string result = System.Text.Encoding.UTF8.GetString(message).Substring(0, message.Length);
             Char delimiter = ',';
-            result = result.Replace(" ", string.Empty);
+            result = result.Replace("\0", string.Empty);
             String[] messages = result.Split(delimiter);
 
             return messages;
@@ -145,7 +211,7 @@ namespace PresidentsServer
             
 
            bool winindicator = false;
-           int turn;
+           int turn, turn2;
 
            Game G = new Game();
 
@@ -153,25 +219,34 @@ namespace PresidentsServer
            byte[] p2cards = G.Buildmessagecards(1);
 
            SendResponse(0, p1cards);
-           SendResponse(0, p2cards);
+           SendResponse(1, p2cards);
             
-           //First thing to do is find out who has the 3 of diamonds
-           if (Game.AIdeck.FindCard(3, Suite.diamonds))
+           //First thing to do is find out who has the ace of diamonds
+           if (Game.AIdeck.FindCard(1, Suite.diamonds))
+           {
                turn = 0;
+               turn2 = 1;
+           }
            else
+           {
                turn = 1;
+               turn2 = 0;
+           }
            
            byte[] turni = BitConverter.GetBytes('T');
+           byte[] nturni = BitConverter.GetBytes('N');
            SendResponse(turn, turni);
+           SendResponse(turn2, nturni);
 
            do
            {
                byte[] movebuff = new byte[4096];
-               RecieveMove(turn, movebuff);
+               RecieveMove(turn, ref movebuff);
 
                char[] chars = new char[movebuff.Length / sizeof(char)];
                System.Buffer.BlockCopy(movebuff, 0, chars, 0, movebuff.Length);
                string charst = new string(chars);
+               charst = charst.Replace("\0", string.Empty);
 
                if (charst == "Pass")
                {
