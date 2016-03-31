@@ -10,13 +10,18 @@ using System.IO;
 using System.Threading;
 namespace PresidentsServer
 {
+    //
+    //Creates the console app (server), connects clients, handles game logic
+    //
     class Program
     {
         public const int numplayers = 2;
 
+        //Configuration of the server
         private Socket m_soc = new Socket(AddressFamily.InterNetwork, SocketType.Stream
            , ProtocolType.Tcp);
 
+        //An Array used to keep all the connections to the server (clients) organized
         public static Socket[] clients = new Socket[numplayers];
 
         /**/
@@ -84,9 +89,31 @@ namespace PresidentsServer
 
             return charst;
         }
+
+        /**/
+        /*
+        static int SendResponse(int clientnum, byte[] move)
         
-        //Either cards (what's left in the deck to be drawn) 
-        //or an error code (indicating an invalid move)
+        NAME
+            SendResponse - Send a message to a connected client.
+        
+        SYNOPSIS
+            static int SendResponse(int clientnum, byte[] move)
+         
+            int clientnum - The position in the array of clients the move should be sent to
+            move - The message to be sent.
+         
+         DESCRIPTION
+            Sends a message to a client containing either cards (what's left in the deck to be drawn) 
+            or an error code (indicating an invalid move).         
+         
+         RETURNS
+            int - 0 sucessful return
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         static int SendResponse(int clientnum, byte[] move)
         {
             int byteCount = 0;
@@ -114,7 +141,30 @@ namespace PresidentsServer
             return 0;
         }
 
-        //A list of positions which correspond to cards in their deck
+        /**/
+        /*
+        static int RecieveMove(int clientnum, ref byte[] movebuff)
+        
+        NAME
+            RecieveMove - Receive a message from a connected client.
+        
+        SYNOPSIS
+            static int RecieveMove(int clientnum, ref byte[] movebuff)
+         
+            int clientnum - The position in the array of clients the move should be received from
+            movebuff - byte array in which the move will be stored.
+         
+         DESCRIPTION
+            Receives a message from a client containing indexes into their array of cards,
+            indicating which cards are part of the move they will play        
+         
+         RETURNS
+            int - 0 sucessful return
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         static int RecieveMove(int clientnum, ref byte[] movebuff)
         {
             int byteCount = 0;
@@ -125,15 +175,15 @@ namespace PresidentsServer
 
             try
             {
-                clients[clientnum].ReceiveTimeout = 10000;
+                //Set time out
+                clients[clientnum].ReceiveTimeout = 30000;
                 clients[clientnum].Receive(Messagesize, 0, Messagesize.Length, SocketFlags.None);
 
                 int size = BitConverter.ToInt32(Messagesize, 0);
 
                 if (size == 0)
                 {
-                    Byte[] resp = new byte[2 * sizeof(char)];
-                    System.Buffer.BlockCopy("E5".ToCharArray(), 0, resp, 0, resp.Length);
+                    Byte[] resp = GetBytes("E5");
                     SendResponse(clientnum, resp);
                 }
 
@@ -154,16 +204,63 @@ namespace PresidentsServer
             return 0;
         }
 
+        /**/
+        /*
+        static string[] ProcessMessage(byte[] message)
+        
+        NAME
+            static string[] ProcessMessage(byte[] message) - Divide a message up into its parts (coma-seperated cards to be played)
+        
+        SYNOPSIS
+            static string[] ProcessMessage(byte[] message)
+         
+            message - 
+         
+         DESCRIPTION
+            Receives a message from a client containing indexes into their array of cards,
+            indicating which cards are part of the move they will play and divides it into individual cards.       
+         
+         RETURNS
+            string[] - the message divided into an array of strings
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         static string[] ProcessMessage(byte[] message)
         {
-            string result = System.Text.Encoding.UTF8.GetString(message).Substring(0, message.Length);
+            string result = GetString(message);
             Char delimiter = ',';
-            result = result.Replace("\0", string.Empty);
             String[] messages = result.Split(delimiter);
 
             return messages;
         }
 
+        /**/
+        /*
+        static void Main(string[] args)
+        
+        NAME
+            Main - Entry point for the application handles the main task of playing the game according
+            to the functions defined in the Game class.
+        
+        SYNOPSIS
+            static void Main(string[] args)
+         
+            args - command line arguments
+         
+         DESCRIPTION
+            static void Main(string[] args) - The entry point for the server console app
+            1. Starts up server and waits for clients to connect
+            2. Facilitates game by continuing to send and recieve messages (cards, errors, etc).
+         
+         RETURNS
+           N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
         static void Main(string[] args)
         {
            	//
@@ -175,6 +272,7 @@ namespace PresidentsServer
             Socket soc = null;
             try 
             {
+                //Create a socket using port 7007
                 soc = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 soc.Bind(new IPEndPoint(IPAddress.Any, 7007));
                 soc.Listen(CONNECTION_BACKLOG);
@@ -183,6 +281,7 @@ namespace PresidentsServer
             {
                 Console.WriteLine( "Server failed to initialized.  Exception: " + e.Message );
             }
+
             byte[] incomingMessageBuffer = new byte[BUFFER_SIZE];	// Receive buffer
 
                 // Wait for a client connection
@@ -214,7 +313,8 @@ namespace PresidentsServer
            int turn, turn2;
 
            Game G = new Game();
-
+           
+           //Deal out cards initially and send them to players
            byte[] p1cards = G.Buildmessagecards(0);
            byte[] p2cards = G.Buildmessagecards(1);
 
@@ -223,38 +323,28 @@ namespace PresidentsServer
             
            //First thing to do is find out who has the ace of diamonds
            if (Game.AIdeck.FindCard(1, Suite.diamonds))
-           {
                turn = 0;
-               turn2 = 1;
-           }
            else
-           {
                turn = 1;
-               turn2 = 0;
-           }
+
+           turn2 = (turn == 0) ? 1 : 0; 
            
            byte[] turni = BitConverter.GetBytes('T');
            byte[] nturni = BitConverter.GetBytes('N');
            SendResponse(turn, turni);
            SendResponse(turn2, nturni);
-
+           
+            //Turn taking loop
            do
            {
                byte[] movebuff = new byte[4096];
                RecieveMove(turn, ref movebuff);
 
-               char[] chars = new char[movebuff.Length / sizeof(char)];
-               System.Buffer.BlockCopy(movebuff, 0, chars, 0, movebuff.Length);
-               string charst = new string(chars);
-               charst = charst.Replace("\0", string.Empty);
+               string charst = GetString(movebuff);
 
                if (charst == "Pass")
                {
-                   if (turn == 1)
-                       turn = 0;
-                   else
-                       turn = 1;
-
+                   turn = (turn == 0) ? 1 : 0; 
 
                    G.ResetLP();
                    continue;
@@ -281,26 +371,22 @@ namespace PresidentsServer
                {
                    char echar = Convert.ToChar(ec);
                    string msg = "E" + echar;
-                   Byte[] resp = new byte[2 * sizeof(char)];
-                   System.Buffer.BlockCopy(msg.ToCharArray(), 0, resp, 0, resp.Length);
+                   Byte[] resp = GetBytes(msg);
                    SendResponse(turn, resp);
+                   continue;
                }
 
                winindicator = G.Checkwin();
 
-               if (!winindicator && ec == 0)
+               if (!winindicator)
                {
-                   if (turn == 1)
-                       turn = 0;
-                   else
-                       turn = 1;
+                   turn = (turn == 0) ? 1 : 0; 
                }
 
            } while (winindicator != true);
 
            string winmsg = "WIN";
-           byte[] winresp = new byte[winmsg.Length * sizeof(char)];
-           System.Buffer.BlockCopy(winmsg.ToCharArray(), 0, winresp, 0, winmsg.Length);
+           byte[] winresp = GetBytes(winmsg);
            SendResponse(turn, winresp);
 
             for (int i = 0; i < clients.Length; i++)
