@@ -176,7 +176,7 @@ namespace PresidentsServer
             try
             {
                 //Set time out
-                clients[clientnum].ReceiveTimeout = 30000;
+               // clients[clientnum].ReceiveTimeout = 30000;
                 clients[clientnum].Receive(Messagesize, 0, Messagesize.Length, SocketFlags.None);
 
                 int size = BitConverter.ToInt32(Messagesize, 0);

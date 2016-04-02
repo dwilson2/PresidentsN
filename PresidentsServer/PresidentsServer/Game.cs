@@ -986,8 +986,8 @@ namespace PresidentsServer
             {
                 string cardstring = decktouse.GetCard(i).name + ',';
                 byte[] card = Program.GetBytes(cardstring);
-                System.Buffer.BlockCopy(card, 0, cards, offset, cardstring.Length);
-                offset += cardstring.Length;
+                System.Buffer.BlockCopy(card, 0, cards, offset, card.Length);
+                offset += card.Length;
             }
 
                 return cards;
@@ -1023,8 +1023,8 @@ namespace PresidentsServer
             {
                 string cardstring = lpdeck.GetCard(i).name + ',';
                 byte[] card = Program.GetBytes(cardstring);
-                System.Buffer.BlockCopy(card, 0, cards, offset, cardstring.Length);
-                offset += cardstring.Length;
+                System.Buffer.BlockCopy(card, 0, cards, offset, card.Length);
+                offset += card.Length;
             }
 
             byte[] sep = Program.GetBytes("||+");

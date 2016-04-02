@@ -26,6 +26,7 @@ namespace PresidentsGame
         public static Dictionary<int, string> ErrorCodes;
         public static ClientConnect connection;
         public static byte[] cards;
+        public static List<DrawInfo> pcards;
 
         /**/
         /*
@@ -53,6 +54,7 @@ namespace PresidentsGame
             InitializeComponent();
             CardImages = new Dictionary<string, Bitmap>();
             Carddraw = new List<DrawInfo>();
+            pcards = new List<DrawInfo>();
             ErrorCodes = new Dictionary<int, string>()
             {
                 {1,"No cards played."},
@@ -66,7 +68,7 @@ namespace PresidentsGame
 
             PopulateCardVP();
             connection = new ClientConnect();
-            cards = new byte[4096];
+            cards = new byte[4096];;
 
             Thread mThread = new Thread(new ThreadStart(main));
             mThread.Start();
@@ -158,7 +160,7 @@ namespace PresidentsGame
             {
                 sDelegate switchp =
                   new sDelegate(switchplay);
-                this.Invoke(switchp, new object[] {t});
+                this.BeginInvoke(switchp, new object[] {t});
             }
 
         }
@@ -348,12 +350,16 @@ namespace PresidentsGame
         private void SoloForm_Paint(object sender, PaintEventArgs e)
         {
             DrawInfo cardpos = new DrawInfo();
-            DrawInfo[] DrawArray = Carddraw.ToArray();
-            int count = Carddraw.Count;
+            DrawInfo[] DrawArray = (Carddraw.Count > 0) ? Carddraw.ToArray() : pcards.ToArray();
+            int count = (Carddraw.Count > 0) ? Carddraw.Count : pcards.Count;
 
-            //Erase the list after the cards have been drawn to the screen as the list will be repopulated before future draws (after each hand)
-            Carddraw.RemoveRange(0, Carddraw.Count);
+            if (Carddraw.Count > 0)
+            {
+                pcards = Carddraw;
 
+                //Erase the list after the cards have been drawn to the screen as the list will be repopulated before future draws (after each hand)
+                Carddraw.RemoveRange(0, Carddraw.Count);
+            }
 
             for (int i = 0; i < count; i++)
             {
@@ -368,15 +374,15 @@ namespace PresidentsGame
 
         /**/
         /*
-          private void HandleError(String[] messages)    
+          private void HandleError(String emessage)    
          
         NAME
-            private void HandleError(String[] messages) - Informs user of error in played cards (invalid move of some sort).
+            private void HandleError(String emessage) - Informs user of error in played cards (invalid move of some sort).
         
         SYNOPSIS
-            private void HandleError(String[] messages) 
+            private void HandleError(String emessage) 
          
-            String[] messages - An array of messages representing the response from the server (in this case the error code).
+            String messages - A messages representing the response from the server (in this case the error code).
       
          DESCRIPTION
             Uses message boxes to tell the user why their move was invalid
@@ -388,39 +394,48 @@ namespace PresidentsGame
             David Wilson
          */
         /**/
-        private void HandleError(String[] messages)
+        private void HandleError(String emessage)
         {
-            //Single character ( 0-4 indicating error code)
-            string code = messages[0].Substring(1,1);
-            
-            string message;
+            if (this.InvokeRequired == false)
+            {
+                //Single character ( 0-4 indicating error code)
+                string code = emessage.Substring(1, 1);
 
-            if (code == "0")
-            {
-                message = ErrorCodes[0];
-            }
-            else if (code == "1")
-            {
-                message = ErrorCodes[1];
-            }
-            else if (code == "2")
-            {
-                message = ErrorCodes[2];
-            }
-            else if (code == "3")
-            {
-                message = ErrorCodes[3];
-            }
-            else if (code == "4")
-            {
-                message = ErrorCodes[4];
+                string message;
+
+                if (code == "0")
+                {
+                    message = ErrorCodes[0];
+                }
+                else if (code == "1")
+                {
+                    message = ErrorCodes[1];
+                }
+                else if (code == "2")
+                {
+                    message = ErrorCodes[2];
+                }
+                else if (code == "3")
+                {
+                    message = ErrorCodes[3];
+                }
+                else if (code == "4")
+                {
+                    message = ErrorCodes[4];
+                }
+                else
+                {
+                    message = "Incorrect error recevied";
+                }
+
+                MessageBox.Show(message);
             }
             else
             {
-                message = "Incorrect error recevied";
+                sDelegate HE =
+                  new sDelegate(HandleError);
+                this.BeginInvoke(HE, new object[] { emessage });
             }
-
-            MessageBox.Show(message);
         }
 
         //delegate for a function with a single string argument (used for switchplay)
@@ -466,7 +481,7 @@ namespace PresidentsGame
             {
                 mDelegate Draw =
                   new mDelegate(Drawc);
-                this.Invoke(Draw, new object[] { messages, messages1 });
+                this.BeginInvoke(Draw, new object[] { messages, messages1 });
             }
         }
 
@@ -499,6 +514,15 @@ namespace PresidentsGame
             byte[] resp = new byte [4096];
             connection.RecvResponse(ref resp);
 
+
+            string result = ClientConnect.GetString(resp);
+
+            if (result.Substring(0, 1) == "E" && Play.Enabled == true)
+            {
+                HandleError(result);
+                return;
+            }
+
             string winresult = ClientConnect.GetString(resp).Substring(0, 3);
             
             if (winresult == "WIN")
@@ -510,23 +534,14 @@ namespace PresidentsGame
                 return;
             }
 
-            string result = ClientConnect.GetString(resp);
-
             //The first message contains either an error or The last played cards
             char[] delimiter1 = { '|', '|', '+' };
             String[] messages1 = result.Split(delimiter1);
 
             Char delimiter = ',';
             String[] messages = result.Substring(messages1[0].Length, (result.Length - messages1[0].Length) ).Split(delimiter);
-
-            if (messages1[0].Substring(0, 1) == "E" && Play.Enabled == true)
-            {
-                HandleError(messages1);
-            }
-            else
-            {
-                Drawc(messages, messages1);
-            }
+            
+            Drawc(messages, messages1);
         }
 
         //Data needed to draw images 
@@ -561,43 +576,56 @@ namespace PresidentsGame
             David Wilson
          */
         /**/
+
+        delegate void eDelegate(object sender, EventArgs e);
+
         private void Play_Click(object sender, EventArgs e)
         {
             //If the card is selected put it in the deck (find out which are selected by looking at
             //the panels. Find out which card is on the panel by looking at Carddraw.)
-            if (C1.active == true) Settmp(0);
-            if (C2.active == true) Settmp(1);
-            if (C3.active == true) Settmp(2);
-            if (C4.active == true) Settmp(3);
-            if (C5.active == true) Settmp(4);
-            if (C6.active == true) Settmp(5);
-            if (C7.active == true) Settmp(6);
-            if (C8.active == true) Settmp(7);
-            if (C9.active == true) Settmp(8);
-            if (C10.active == true) Settmp(9);
-            if (C11.active == true) Settmp(0);
-            if (C12.active == true) Settmp(11);
-            if (C13.active == true) Settmp(12);
-            if (C14.active == true) Settmp(13);
-            if (C15.active == true) Settmp(14);
-            if (C16.active == true) Settmp(15);
-            if (C17.active == true) Settmp(16);
-            if (C18.active == true) Settmp(17);
-            if (C19.active == true) Settmp(18);
-            if (C20.active == true) Settmp(19);
-            if (C21.active == true) Settmp(20);
-            if (C22.active == true) Settmp(21);
-            if (C23.active == true) Settmp(22);
-            if (C24.active == true) Settmp(23);
-            if (C25.active == true) Settmp(24);
-            if (C26.active == true) Settmp(25);
 
-           
-            PrevH.Visible = true;
-            Clear();
+            if (this.InvokeRequired == false)
+            {
+                if (C1.active == true) Settmp(0);
+                if (C2.active == true) Settmp(1);
+                if (C3.active == true) Settmp(2);
+                if (C4.active == true) Settmp(3);
+                if (C5.active == true) Settmp(4);
+                if (C6.active == true) Settmp(5);
+                if (C7.active == true) Settmp(6);
+                if (C8.active == true) Settmp(7);
+                if (C9.active == true) Settmp(8);
+                if (C10.active == true) Settmp(9);
+                if (C11.active == true) Settmp(0);
+                if (C12.active == true) Settmp(11);
+                if (C13.active == true) Settmp(12);
+                if (C14.active == true) Settmp(13);
+                if (C15.active == true) Settmp(14);
+                if (C16.active == true) Settmp(15);
+                if (C17.active == true) Settmp(16);
+                if (C18.active == true) Settmp(17);
+                if (C19.active == true) Settmp(18);
+                if (C20.active == true) Settmp(19);
+                if (C21.active == true) Settmp(20);
+                if (C22.active == true) Settmp(21);
+                if (C23.active == true) Settmp(22);
+                if (C24.active == true) Settmp(23);
+                if (C25.active == true) Settmp(24);
+                if (C26.active == true) Settmp(25);
 
-            connection.SendCards(cards.ToString());
-            Array.Clear(cards, 0, 4096);
+
+                PrevH.Visible = true;
+                Clear();
+
+                connection.SendCards(ClientConnect.GetString(cards));
+                Array.Clear(cards, 0, 4096);
+            }
+            else
+            {
+                 eDelegate pclick =
+                  new eDelegate(Play_Click);
+                this.BeginInvoke(pclick, new object[] {sender, e});
+            }
         }
 
         /**/
@@ -620,34 +648,45 @@ namespace PresidentsGame
             David Wilson
          */
         /**/
+        delegate void nDelegate();
+
         private void Clear()
         {
-            if (C1.active == true) C1.Invalidate();
-            if (C2.active == true) C2.Invalidate();
-            if (C3.active == true) C3.Invalidate();
-            if (C4.active == true) C4.Invalidate();
-            if (C5.active == true) C5.Invalidate();
-            if (C6.active == true) C6.Invalidate();
-            if (C7.active == true) C7.Invalidate();
-            if (C8.active == true) C8.Invalidate();
-            if (C9.active == true) C9.Invalidate();
-            if (C10.active == true) C10.Invalidate();
-            if (C11.active == true) C11.Invalidate();
-            if (C12.active == true) C12.Invalidate();
-            if (C13.active == true) C13.Invalidate();
-            if (C14.active == true) C14.Invalidate();
-            if (C15.active == true) C15.Invalidate();
-            if (C16.active == true) C16.Invalidate();
-            if (C17.active == true) C17.Invalidate();
-            if (C18.active == true) C18.Invalidate();
-            if (C19.active == true) C19.Invalidate();
-            if (C20.active == true) C20.Invalidate();
-            if (C21.active == true) C21.Invalidate();
-            if (C22.active == true) C22.Invalidate();
-            if (C23.active == true) C23.Invalidate();
-            if (C24.active == true) C24.Invalidate();
-            if (C25.active == true) C25.Invalidate();
-            if (C26.active == true) C26.Invalidate();
+            if (this.InvokeRequired == false)
+            {
+                if (C1.active == true) C1.Invalidate();
+                if (C2.active == true) C2.Invalidate();
+                if (C3.active == true) C3.Invalidate();
+                if (C4.active == true) C4.Invalidate();
+                if (C5.active == true) C5.Invalidate();
+                if (C6.active == true) C6.Invalidate();
+                if (C7.active == true) C7.Invalidate();
+                if (C8.active == true) C8.Invalidate();
+                if (C9.active == true) C9.Invalidate();
+                if (C10.active == true) C10.Invalidate();
+                if (C11.active == true) C11.Invalidate();
+                if (C12.active == true) C12.Invalidate();
+                if (C13.active == true) C13.Invalidate();
+                if (C14.active == true) C14.Invalidate();
+                if (C15.active == true) C15.Invalidate();
+                if (C16.active == true) C16.Invalidate();
+                if (C17.active == true) C17.Invalidate();
+                if (C18.active == true) C18.Invalidate();
+                if (C19.active == true) C19.Invalidate();
+                if (C20.active == true) C20.Invalidate();
+                if (C21.active == true) C21.Invalidate();
+                if (C22.active == true) C22.Invalidate();
+                if (C23.active == true) C23.Invalidate();
+                if (C24.active == true) C24.Invalidate();
+                if (C25.active == true) C25.Invalidate();
+                if (C26.active == true) C26.Invalidate();
+            }
+            else 
+            {
+                nDelegate sclear =
+                  new nDelegate(Clear);
+                this.BeginInvoke(sclear);
+            }
         }
 
         /**/
@@ -676,137 +715,295 @@ namespace PresidentsGame
         {
             string ostring = ClientConnect.GetString(cards);
             ostring = ostring.Replace("\0", string.Empty);
+            byte[] ccard = ClientConnect.GetBytes(ostring);
 
             string str = index.ToString() + ',';
-            System.Buffer.BlockCopy(str.ToCharArray(), 0, cards, ostring.Length, str.Length);
+            byte[] strb = ClientConnect.GetBytes(str);
+            System.Buffer.BlockCopy(strb, 0, cards, ccard.Length, strb.Length);
         }
         
         //Event handler for each transparent message panel to change color and property to active
         private void C1_Click(object sender, EventArgs e)
         {
-            C1.Invalidate();
+            if (this.InvokeRequired == false)
+             C1.Invalidate();
+            else 
+            {
+                eDelegate cclick = new eDelegate(C1_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C2_Click(object sender, EventArgs e)
         {
-            C2.Invalidate();
+            if (this.InvokeRequired == false)
+                C2.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C2_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C3_Click(object sender, EventArgs e)
         {
-            C3.Invalidate();
+            if (this.InvokeRequired == false)
+                C3.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C3_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C4_Click(object sender, EventArgs e)
         {
-            C4.Invalidate();
+            if (this.InvokeRequired == false)
+                C4.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C4_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C5_Click(object sender, EventArgs e)
         {
-            C5.Invalidate();
+            if (this.InvokeRequired == false)
+                C5.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C5_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C6_Click(object sender, EventArgs e)
         {
-            C6.Invalidate();
+            if (this.InvokeRequired == false)
+                C6.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C6_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C7_Click(object sender, EventArgs e)
         {
-            C7.Invalidate();
+            if (this.InvokeRequired == false)
+                C7.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C7_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C8_Click(object sender, EventArgs e)
         {
-            C8.Invalidate();
+            if (this.InvokeRequired == false)
+                C8.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C8_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C9_Click(object sender, EventArgs e)
         {
-            C9.Invalidate();
+            if (this.InvokeRequired == false)
+                C9.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C9_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C10_Click(object sender, EventArgs e)
         {
-            C10.Invalidate();
+            if (this.InvokeRequired == false)
+                C10.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C10_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C11_Click(object sender, EventArgs e)
         {
-            C11.Invalidate();
+            if (this.InvokeRequired == false)
+                C11.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C11_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C12_Click(object sender, EventArgs e)
         {
-            C12.Invalidate();
+            if (this.InvokeRequired == false)
+                C12.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C12_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C13_Click(object sender, EventArgs e)
         {
-            C13.Invalidate();
+            if (this.InvokeRequired == false)
+                C13.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C13_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C14_Click(object sender, EventArgs e)
         {
-            C14.Invalidate();
+            if (this.InvokeRequired == false)
+                C14.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C14_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C15_Click(object sender, EventArgs e)
         {
-            C15.Invalidate();
+            if (this.InvokeRequired == false)
+                C15.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C15_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C16_Click(object sender, EventArgs e)
         {
-            C16.Invalidate();
+            if (this.InvokeRequired == false)
+                C16.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C16_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C17_Click(object sender, EventArgs e)
         {
-            C17.Invalidate();
+            if (this.InvokeRequired == false)
+                C17.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C17_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C18_Click(object sender, EventArgs e)
         {
-            C18.Invalidate();
+            if (this.InvokeRequired == false)
+                C18.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C18_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C19_Click(object sender, EventArgs e)
         {
-            C19.Invalidate();
+            if (this.InvokeRequired == false)
+                C19.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C19_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C20_Click(object sender, EventArgs e)
         {
-            C20.Invalidate();
+            if (this.InvokeRequired == false)
+                C20.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C20_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C21_Click(object sender, EventArgs e)
         {
-            C21.Invalidate();
+            if (this.InvokeRequired == false)
+                C21.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C21_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void C22_Click(object sender, EventArgs e)
         {
-            C22.Invalidate(); 
+            if (this.InvokeRequired == false)
+                C22.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C22_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            } 
         }
 
         private void C23_Click(object sender, EventArgs e)
         {
-            C23.Invalidate();
+            if (this.InvokeRequired == false)
+                C23.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C23_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
         private void C24_Click(object sender, EventArgs e)
         {
-            C24.Invalidate();
+            if (this.InvokeRequired == false)
+                C24.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C24_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
         private void C25_Click(object sender, EventArgs e)
         {
-            C25.Invalidate();
+            if (this.InvokeRequired == false)
+                C25.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C25_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
         private void C26_Click(object sender, EventArgs e)
         {
-            C26.Invalidate();
+            if (this.InvokeRequired == false)
+                C26.Invalidate();
+            else
+            {
+                eDelegate cclick = new eDelegate(C26_Click);
+                this.BeginInvoke(cclick, new object[] { sender, e });
+            }
         }
 
         private void Pass_Click(object sender, EventArgs e)
