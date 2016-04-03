@@ -188,8 +188,8 @@ namespace PresidentsServer
         public Card GetCard(int index)
         {
                 Card nullc = new Card();
-                
-                if (index > deck.Count) return nullc;
+
+                if (index > deck.ToArray().Length -1) return nullc;
 
                 Card[] cardarray = deck.ToArray();
 
@@ -235,7 +235,7 @@ namespace PresidentsServer
                 this.deck.Remove(cCard);
                 return true;
             }
-
+            
             return false;
         }
 
@@ -320,7 +320,7 @@ namespace PresidentsServer
         /**/
         public int size()
         {
-            return deck.Count();
+            return deck.Count;
         }
 
         /**/
@@ -396,11 +396,16 @@ namespace PresidentsServer
             Deck decktouse = (turn == 0 ? AIdeck : pdeck);
             int retval = 0;
 
+            Card nullc = new Card();
+
             for (int i = 0; i < cards.Length; i++)
             {
                 int cardi = Convert.ToInt32(cards[i],10);
                 Card cc = decktouse.GetCard(cardi);
                 tdeck.SetCard(cc.CV, cc.SV);
+
+                if (cc.CV == nullc.CV && cc.SV == nullc.SV)
+                    retval = 3;
             }
 
             Hand res = Checkhand();
@@ -820,7 +825,7 @@ namespace PresidentsServer
 
             for (int i = 0; i < tdeck.size(); i++)
             {
-                tdeck.DealCard(i,lpdeck);
+                lpdeck.SetCard(tdeck.GetCard(i).CV, tdeck.GetCard(i).SV);
             }
 
             tdeck.empty();
@@ -1057,6 +1062,31 @@ namespace PresidentsServer
         {
             lpdeck.empty();
             lpdeckh = Hand.error;
+        }
+
+        /**/
+        /*
+        public void ResetTD()
+        
+        NAME
+           public void ResetTD() - Clear out last played cards so person can play a non-error hand
+        
+        SYNOPSIS
+            public void ResetLP()
+                     
+         DESCRIPTION
+            Clears out tdeck
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
+        public void ResetTD()
+        {
+            tdeck.empty();
         }
 
         /**/

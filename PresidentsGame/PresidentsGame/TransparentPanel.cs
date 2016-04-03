@@ -24,10 +24,9 @@ namespace PresidentsGame
             //base.OnPaintBackground(e);
         }
 
-        protected override void OnPaint(PaintEventArgs e)
+        public void ToggleActive()
         {
-            base.OnPaint(e);
-            Graphics g = e.Graphics;
+            Graphics g = this.CreateGraphics();
 
             Pen myPen;
 
@@ -41,6 +40,19 @@ namespace PresidentsGame
                 myPen = new Pen(SystemColors.ActiveCaptionText, 5);
                 this.active = true;
             }
+
+            g.DrawRectangle(myPen, g.VisibleClipBounds.X, g.VisibleClipBounds.Y, g.VisibleClipBounds.Width, g.VisibleClipBounds.Height);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            Graphics g = e.Graphics;
+
+            Pen myPen;
+
+            myPen = new Pen(SystemColors.Control, 5);
+            this.active = false;
 
             g.DrawRectangle(myPen, g.VisibleClipBounds.X, g.VisibleClipBounds.Y ,g.VisibleClipBounds.Width, g.VisibleClipBounds.Height);        
         }

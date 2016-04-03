@@ -155,12 +155,14 @@ namespace PresidentsGame
             {
                 if (t != "T")
                     Play.Enabled = false;
+                else
+                    Play.Enabled = true;
             }
             else
             {
                 sDelegate switchp =
                   new sDelegate(switchplay);
-                this.BeginInvoke(switchp, new object[] {t});
+                this.Invoke(switchp, new object[] {t});
             }
 
         }
@@ -256,6 +258,7 @@ namespace PresidentsGame
 
             for (int i = 0; i < playercards.Length; i++)
             {
+
                 cardpos.x = CC.Location.X;
                 cardpos.y = CC.Location.Y;
                 cardpos.img = CardImages[ playercards[i]] ;
@@ -423,6 +426,12 @@ namespace PresidentsGame
                 {
                     message = ErrorCodes[4];
                 }
+                else if (code == "5")
+                {
+                    message = ErrorCodes[5];
+                    EventArgs e = new EventArgs();
+                    Pass_Click(this, e);
+                }
                 else
                 {
                     message = "Incorrect error recevied";
@@ -434,7 +443,7 @@ namespace PresidentsGame
             {
                 sDelegate HE =
                   new sDelegate(HandleError);
-                this.BeginInvoke(HE, new object[] { emessage });
+                this.Invoke(HE, new object[] { emessage });
             }
         }
 
@@ -470,7 +479,7 @@ namespace PresidentsGame
             {
 
                 DrawPlayerCards(messages);
-                DrawPlayedCards(messages1[0].Split(','));
+                DrawPlayedCards(messages1[0].Substring(0,messages1[0].Length-1).Split(','));
 
                 if (Play.Enabled == false)
                     Play.Enabled = true;
@@ -481,11 +490,10 @@ namespace PresidentsGame
             {
                 mDelegate Draw =
                   new mDelegate(Drawc);
-                this.BeginInvoke(Draw, new object[] { messages, messages1 });
+                this.Invoke(Draw, new object[] { messages, messages1 });
             }
         }
 
-        /**/
         /*
          private void HandleResponse()        
         
@@ -511,13 +519,21 @@ namespace PresidentsGame
         /**/
         private void HandleResponse()
         {
-            byte[] resp = new byte [4096];
+            byte[] resp = new byte [8192];
             connection.RecvResponse(ref resp);
 
 
             string result = ClientConnect.GetString(resp);
 
-            if (result.Substring(0, 1) == "E" && Play.Enabled == true)
+            string r1 = result.Substring(0,1);
+
+            if(r1 == "N" || r1 == "T")
+            {
+                switchplay(r1);
+                return;
+            }
+
+            if (r1 == "E" && Play.Enabled == true)
             {
                 HandleError(result);
                 return;
@@ -539,7 +555,7 @@ namespace PresidentsGame
             String[] messages1 = result.Split(delimiter1);
 
             Char delimiter = ',';
-            String[] messages = result.Substring(messages1[0].Length, (result.Length - messages1[0].Length) ).Split(delimiter);
+            String[] messages = result.Substring(messages1[0].Length + 3, (result.Length - (messages1[0].Length + 4)) ).Split(delimiter);
             
             Drawc(messages, messages1);
         }
@@ -624,7 +640,7 @@ namespace PresidentsGame
             {
                  eDelegate pclick =
                   new eDelegate(Play_Click);
-                this.BeginInvoke(pclick, new object[] {sender, e});
+                this.Invoke(pclick, new object[] {sender, e});
             }
         }
 
@@ -685,7 +701,7 @@ namespace PresidentsGame
             {
                 nDelegate sclear =
                   new nDelegate(Clear);
-                this.BeginInvoke(sclear);
+                this.Invoke(sclear);
             }
         }
 
@@ -726,289 +742,298 @@ namespace PresidentsGame
         private void C1_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-             C1.Invalidate();
-            else 
+                C1.ToggleActive();
+            else
             {
                 eDelegate cclick = new eDelegate(C1_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C2_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C2.Invalidate();
+                C2.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C2_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C3_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C3.Invalidate();
+                C3.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C3_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C4_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C4.Invalidate();
+                C4.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C4_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C5_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C5.Invalidate();
+                C5.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C5_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C6_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C6.Invalidate();
+                C6.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C6_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C7_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C7.Invalidate();
+                C7.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C7_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C8_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C8.Invalidate();
+                C8.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C8_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C9_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C9.Invalidate();
+                C9.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C9_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C10_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C10.Invalidate();
+                C10.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C10_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C11_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C11.Invalidate();
+                C11.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C11_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C12_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C12.Invalidate();
+                C12.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C12_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C13_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C13.Invalidate();
+                C13.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C13_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C14_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C14.Invalidate();
+                C14.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C14_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C15_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C15.Invalidate();
+                C15.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C15_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C16_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C16.Invalidate();
+                C16.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C16_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C17_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C17.Invalidate();
+                C17.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C17_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C18_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C18.Invalidate();
+                C18.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C18_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C19_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C19.Invalidate();
+                C19.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C19_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C20_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C20.Invalidate();
+                C20.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C20_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C21_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C21.Invalidate();
+                C21.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C21_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void C22_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C22.Invalidate();
+                C22.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C22_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             } 
         }
 
         private void C23_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C23.Invalidate();
+                C23.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C23_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
         private void C24_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C24.Invalidate();
+                C24.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C24_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
         private void C25_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C25.Invalidate();
+                C25.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C25_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
         private void C26_Click(object sender, EventArgs e)
         {
             if (this.InvokeRequired == false)
-                C26.Invalidate();
+                C26.ToggleActive();
             else
             {
                 eDelegate cclick = new eDelegate(C26_Click);
-                this.BeginInvoke(cclick, new object[] { sender, e });
+                this.Invoke(cclick, new object[] { sender, e });
             }
         }
 
         private void Pass_Click(object sender, EventArgs e)
         {
-            connection.SendCards("Pass");
+            if (this.InvokeRequired == false)
+            {
+                connection.SendCards("Pass");
+                Clear();
+            }
+            else
+            {
+                eDelegate pclick = new eDelegate(Pass_Click);
+                this.Invoke(pclick, new object[] { sender, e });
+            }
         }
 
     }

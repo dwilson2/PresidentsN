@@ -142,7 +142,7 @@ namespace PresidentsGame
         public int RecvResponse(ref byte[] response)
         {
             byte[] sizebuffer = new byte[(sizeof(int))];
-            byte[] msg = new byte[4096];
+            byte[] msg = new byte[8192];
 
             try
             {
@@ -194,7 +194,7 @@ namespace PresidentsGame
         public int SendCards(string message)
         {
             byte[] msg = GetBytes(message);
-            byte[] sizebuffer = BitConverter.GetBytes(message.Length);
+            byte[] sizebuffer = BitConverter.GetBytes(msg.Length);
 
             try
             {

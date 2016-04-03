@@ -176,17 +176,10 @@ namespace PresidentsServer
             try
             {
                 //Set time out
-               // clients[clientnum].ReceiveTimeout = 30000;
+                clients[clientnum].ReceiveTimeout = 30000;
                 clients[clientnum].Receive(Messagesize, 0, Messagesize.Length, SocketFlags.None);
 
                 int size = BitConverter.ToInt32(Messagesize, 0);
-
-                if (size == 0)
-                {
-                    Byte[] resp = GetBytes("E5");
-                    SendResponse(clientnum, resp);
-                }
-
 
                 do
                 {
@@ -197,7 +190,13 @@ namespace PresidentsServer
             catch (SocketException e)
             {
                 Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
-                return (e.ErrorCode);
+
+                if (e.ErrorCode == 10060)
+                {
+                    Byte[] resp = GetBytes("E5");
+                    SendResponse(clientnum, resp);
+                    return 1;
+                }
             }
 
             movebuff = message;
@@ -230,6 +229,7 @@ namespace PresidentsServer
         static string[] ProcessMessage(byte[] message)
         {
             string result = GetString(message);
+            result = result.Substring(0, result.Length - 1);
             Char delimiter = ',';
             String[] messages = result.Split(delimiter);
 
@@ -338,13 +338,18 @@ namespace PresidentsServer
            do
            {
                byte[] movebuff = new byte[4096];
-               RecieveMove(turn, ref movebuff);
+               int rret = RecieveMove(turn, ref movebuff);
+
+               if (rret == 1) continue;
 
                string charst = GetString(movebuff);
 
                if (charst == "Pass")
                {
+                   SendResponse(turn,nturni);
+
                    turn = (turn == 0) ? 1 : 0; 
+                   SendResponse(turn,turni);
 
                    G.ResetLP();
                    continue;
@@ -362,15 +367,21 @@ namespace PresidentsServer
                    byte[] p1 = G.Buildmessagecards(0);
                    byte[] p2 = G.Buildmessagecards(1);
 
-                   SendResponse(0, lp);
-                   SendResponse(0, p1);
-                   SendResponse(1, lp);
-                   SendResponse(1, p2); 
+                   byte[] p1f = new byte[lp.Length + p1.Length];
+                   System.Buffer.BlockCopy(lp, 0, p1f, 0, lp.Length);
+                   System.Buffer.BlockCopy(p1, 0, p1f, lp.Length, p1.Length);
+
+                   byte[] p2f = new byte[lp.Length + p2.Length];
+                   System.Buffer.BlockCopy(lp, 0, p2f, 0, lp.Length);
+                   System.Buffer.BlockCopy(p2, 0, p2f, lp.Length, p2.Length);
+
+                   SendResponse(0, p1f);
+                   SendResponse(1, p2f); 
                }
                else
                {
-                   char echar = Convert.ToChar(ec);
-                   string msg = "E" + echar;
+                   G.ResetTD();
+                   string msg = "E" + ec.ToString();
                    Byte[] resp = GetBytes(msg);
                    SendResponse(turn, resp);
                    continue;
