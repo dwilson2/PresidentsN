@@ -396,6 +396,8 @@ namespace PresidentsServer
             Deck decktouse = (turn == 0 ? AIdeck : pdeck);
             int retval = 0;
 
+            decktouse.OrderCards();
+
             Card nullc = new Card();
 
             for (int i = 0; i < cards.Length; i++)
@@ -856,7 +858,7 @@ namespace PresidentsServer
             David Wilson
          */
         /**/
-        static Game() 
+        public Game() 
         {
             masterdeck = new Deck();
             AIdeck = new Deck();
@@ -889,10 +891,11 @@ namespace PresidentsServer
             David Wilson
          */
         /**/
-        static void Initializegame()
+        public void Initializegame()
         {
             //Note: 1 - Ace, Royals are 11,12,13
             //Populates a deck with one card of each suite
+
             for (int i = 1; i <= 13; i++)
             {
                 masterdeck.SetCard(i, Suite.diamonds);
@@ -929,7 +932,7 @@ namespace PresidentsServer
             David Wilson
          */
         /**/
-        static void Shuffle()
+        public void Shuffle()
         {
             Random x = new Random();
             int turn = 0;
@@ -987,6 +990,8 @@ namespace PresidentsServer
             Deck decktouse = (turn == 0  ? AIdeck : pdeck);
             int offset = 0;
 
+            decktouse.OrderCards();
+
             for (int i = 0; i < decktouse.size(); i++)
             {
                 string cardstring = decktouse.GetCard(i).name + ',';
@@ -1036,6 +1041,18 @@ namespace PresidentsServer
             System.Buffer.BlockCopy(sep, 0, cards, offset, sep.Length);
 
             return cards;
+        }
+
+        public byte[] Buildmessage(int clientnum)
+        {
+            byte[] lp = BuildmessageLP();
+            byte[] p = Buildmessagecards(clientnum);
+
+            byte[] pf = new byte[lp.Length + p.Length];
+            System.Buffer.BlockCopy(lp, 0, pf, 0, lp.Length);
+            System.Buffer.BlockCopy(p, 0, pf, lp.Length, p.Length);
+
+            return pf;
         }
 
         /**/
@@ -1117,11 +1134,11 @@ namespace PresidentsServer
                 return false;
         }
 
-        public static Deck masterdeck;
-        public static Deck AIdeck;
-        public static Deck pdeck;
-        public static Deck lpdeck;
-        public static Deck tdeck;
-        public static Hand lpdeckh;
+        public Deck masterdeck;
+        public Deck AIdeck;
+        public Deck pdeck;
+        public Deck lpdeck;
+        public Deck tdeck;
+        public Hand lpdeckh;
     }
 }

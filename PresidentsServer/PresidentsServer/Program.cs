@@ -120,6 +120,8 @@ namespace PresidentsServer
 
             byte[] Messagesize = BitConverter.GetBytes(move.Length);
 
+            int opp = (clientnum == 0) ? 1 : 0;
+
             try
             {
                 clients[clientnum].Send(Messagesize, 0, Messagesize.Length, SocketFlags.None);
@@ -135,7 +137,14 @@ namespace PresidentsServer
             catch (SocketException e)
             {
                 Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
-                return (e.ErrorCode);
+
+                if (e.ErrorCode == 10054)
+                {
+                    Byte[] resp = GetBytes("E6");
+                    if (!(clients[opp].Poll(1, SelectMode.SelectRead) && clients[opp].Available == 0))
+                      SendResponse(opp, resp);
+                    Environment.Exit(0);
+                }
             }
 
             return 0;
@@ -173,6 +182,8 @@ namespace PresidentsServer
             byte[] Messagesize = new byte[sizeof(int)];
             byte[] message = new byte[4096];
 
+            int opp = (clientnum == 0) ? 1 : 0;
+
             try
             {
                 //Set time out
@@ -196,6 +207,14 @@ namespace PresidentsServer
                     Byte[] resp = GetBytes("E5");
                     SendResponse(clientnum, resp);
                     return 1;
+                }
+
+                if (e.ErrorCode == 10054)
+                {
+                    Byte[] resp = GetBytes("E6");
+                    if (!(clients[opp].Poll(1, SelectMode.SelectRead) && clients[opp].Available == 0))
+                        SendResponse(opp, resp);
+                    Environment.Exit(0);
                 }
             }
 
@@ -263,26 +282,31 @@ namespace PresidentsServer
         /**/
         static void Main(string[] args)
         {
-           	//
-			// Create a Sockets based echo server.
-			//
-            const int CONNECTION_BACKLOG = 5;
-            const int BUFFER_SIZE = 4096;
+            string winnerresponse, loserresponse;
 
-            Socket soc = null;
-            try 
-            {
-                //Create a socket using port 7007
-                soc = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                soc.Bind(new IPEndPoint(IPAddress.Any, 7007));
-                soc.Listen(CONNECTION_BACKLOG);
-            } 
-            catch ( Exception e ) 
-            {
-                Console.WriteLine( "Server failed to initialized.  Exception: " + e.Message );
-            }
+                //
+                // Create a Sockets based echo server.
+                //
+                const int CONNECTION_BACKLOG = 5;
+                const int BUFFER_SIZE = 4096;
 
-            byte[] incomingMessageBuffer = new byte[BUFFER_SIZE];	// Receive buffer
+                Socket soc = null;
+                try
+                {
+                    //Create a socket using port 7007
+                    soc = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    soc.Bind(new IPEndPoint(IPAddress.Any, 7007));
+                    soc.Listen(CONNECTION_BACKLOG);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Server failed to initialized.  Exception: " + e.Message);
+                }
+
+                byte[] incomingMessageBuffer = new byte[BUFFER_SIZE];	// Receive buffer
+
+                do
+                {
 
                 // Wait for a client connection
                 for (int i = 0; i < clients.Length; i++)
@@ -292,7 +316,7 @@ namespace PresidentsServer
                         clients[i] = soc.Accept();
 
                         // Display the client endpoint
-                        Console.WriteLine("Server: Received connection request from client {0} at " + clients[i].RemoteEndPoint,i);
+                        Console.WriteLine("Server: Received connection request from client {0} at " + clients[i].RemoteEndPoint, i);
                     }
                     catch (Exception ex)
                     {
@@ -307,98 +331,117 @@ namespace PresidentsServer
                     }
                 }
 
-            
 
-           bool winindicator = false;
-           int turn, turn2;
 
-           Game G = new Game();
-           
-           //Deal out cards initially and send them to players
-           byte[] p1cards = G.Buildmessagecards(0);
-           byte[] p2cards = G.Buildmessagecards(1);
+                bool winindicator = false;
+                int turn, turn2;
 
-           SendResponse(0, p1cards);
-           SendResponse(1, p2cards);
-            
-           //First thing to do is find out who has the ace of diamonds
-           if (Game.AIdeck.FindCard(1, Suite.diamonds))
-               turn = 0;
-           else
-               turn = 1;
+                Game G = new Game();
 
-           turn2 = (turn == 0) ? 1 : 0; 
-           
-           byte[] turni = BitConverter.GetBytes('T');
-           byte[] nturni = BitConverter.GetBytes('N');
-           SendResponse(turn, turni);
-           SendResponse(turn2, nturni);
-           
-            //Turn taking loop
-           do
-           {
-               byte[] movebuff = new byte[4096];
-               int rret = RecieveMove(turn, ref movebuff);
+                //Deal out cards initially and send them to players
+                byte[] p1cards = G.Buildmessagecards(0);
+                byte[] p2cards = G.Buildmessagecards(1);
 
-               if (rret == 1) continue;
+                SendResponse(0, p1cards);
+                SendResponse(1, p2cards);
 
-               string charst = GetString(movebuff);
+                //First thing to do is find out who has the ace of diamonds
+                if (G.AIdeck.FindCard(1, Suite.diamonds))
+                    turn = 0;
+                else
+                    turn = 1;
 
-               if (charst == "Pass")
-               {
-                   SendResponse(turn,nturni);
+                turn2 = (turn == 0) ? 1 : 0;
 
-                   turn = (turn == 0) ? 1 : 0; 
-                   SendResponse(turn,turni);
+                byte[] turni = BitConverter.GetBytes('T');
+                byte[] nturni = BitConverter.GetBytes('N');
+                SendResponse(turn, turni);
+                SendResponse(turn2, nturni);
 
-                   G.ResetLP();
-                   continue;
-               }
+                byte[] movebuff = new byte[4096];
 
-               string[] cards = ProcessMessage(movebuff);
+                //Turn taking loop
+               while (true) {
+                    Array.Clear(movebuff, 0, movebuff.Length);
 
-               int ec = G.VerifyHand(cards, turn);
+                    int rret = RecieveMove(turn, ref movebuff);
 
-               if ( ec == 0)
-               {
-                   G.PlayCards();
+                    if (rret == 1) continue;
 
-                   byte[] lp = G.BuildmessageLP();
-                   byte[] p1 = G.Buildmessagecards(0);
-                   byte[] p2 = G.Buildmessagecards(1);
+                    string charst = GetString(movebuff);
 
-                   byte[] p1f = new byte[lp.Length + p1.Length];
-                   System.Buffer.BlockCopy(lp, 0, p1f, 0, lp.Length);
-                   System.Buffer.BlockCopy(p1, 0, p1f, lp.Length, p1.Length);
+                    if (charst == "Pass")
+                    {
+                        SendResponse(turn, nturni);
 
-                   byte[] p2f = new byte[lp.Length + p2.Length];
-                   System.Buffer.BlockCopy(lp, 0, p2f, 0, lp.Length);
-                   System.Buffer.BlockCopy(p2, 0, p2f, lp.Length, p2.Length);
+                        turn = (turn == 0) ? 1 : 0;
+                        SendResponse(turn, turni);
 
-                   SendResponse(0, p1f);
-                   SendResponse(1, p2f); 
-               }
-               else
-               {
-                   G.ResetTD();
-                   string msg = "E" + ec.ToString();
-                   Byte[] resp = GetBytes(msg);
-                   SendResponse(turn, resp);
-                   continue;
-               }
+                        G.ResetLP();
 
-               winindicator = G.Checkwin();
+                        byte[] p1 = G.Buildmessage(0);
+                        byte[] p2 = G.Buildmessage(1);
 
-               if (!winindicator)
-               {
-                   turn = (turn == 0) ? 1 : 0; 
-               }
+                        SendResponse(0, p1);
+                        SendResponse(1, p2);
 
-           } while (winindicator != true);
+                        continue;
+                    }
 
-           string winmsg = "WIN";
-           byte[] winresp = GetBytes(winmsg);
-           SendResponse(turn, winresp);
+                    string[] cards = ProcessMessage(movebuff);
+
+                    int ec = G.VerifyHand(cards, turn);
+
+                    if (ec == 0)
+                    {
+                        G.PlayCards();
+
+                        if ((winindicator = G.Checkwin()) == true)
+                            break;
+
+                        byte[] p1 = G.Buildmessage(0);
+                        byte[] p2 = G.Buildmessage(1);
+
+                        SendResponse(0, p1);
+                        SendResponse(1, p2);
+
+                    }
+                    else
+                    {
+                        G.ResetTD();
+                        string msg = "E" + ec.ToString();
+                        Byte[] resp = GetBytes(msg);
+                        SendResponse(turn, resp);
+                        continue;
+                    }
+
+                    turn = (turn == 0) ? 1 : 0;
+               };
+
+                string winmsg = "WIN";
+                byte[] winresp = GetBytes(winmsg);
+                SendResponse(turn, winresp);
+                RecieveMove(turn, ref movebuff);
+
+                winnerresponse = GetString(movebuff);
+
+                turn = (turn == 0) ? 1 : 0;
+                string lossmsg = "LOS";
+                byte[] lossresp = GetBytes(lossmsg);
+                SendResponse(turn, lossresp);
+
+                Array.Clear(movebuff, 0, movebuff.Length);
+                RecieveMove(turn, ref movebuff);
+                loserresponse = GetString(movebuff);
+
+                if (winnerresponse == "RP" && loserresponse == "RP")
+                {
+                    byte[] playagin = GetBytes("PA");
+                    SendResponse(0, playagin);
+                    SendResponse(1, playagin);
+                }
+            }
+            while (winnerresponse == "RP" && loserresponse == "RP");
 
             for (int i = 0; i < clients.Length; i++)
             {

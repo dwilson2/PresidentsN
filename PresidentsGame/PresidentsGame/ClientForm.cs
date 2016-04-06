@@ -21,12 +21,13 @@ namespace PresidentsGame
     public partial class ClientForm : Form
     {
         //Global objects
-        public static List<DrawInfo> Carddraw;
+        public List<DrawInfo> Carddraw;
         public static Dictionary<string, Bitmap> CardImages;
         public static Dictionary<int, string> ErrorCodes;
+        public static Dictionary<string, string> EndCodes;
         public static ClientConnect connection;
         public static byte[] cards;
-        public static List<DrawInfo> pcards;
+        public List<DrawInfo> pcards;
 
         /**/
         /*
@@ -61,16 +62,25 @@ namespace PresidentsGame
                 {2, "Incorrect number of cards played."},
                 {3, "Invalid hand. Is your hand a 'poker' hand?"},
                 {4, "Your hand is not better than your opponents."},
-                {5, "Sorry your time expired so you automatically pass."}
+                {5, "Sorry your time expired so you automatically pass."},
+                {6, "Your opponent disconnected so you win!! Goodbye"},
+                {7, "Sorry, the server has crashed. Goodbye"}
+            };
+
+            EndCodes = new Dictionary<string, string>()
+            {
+                {"WIN", "Congrats! You won! Would you like to play again?"},
+                {"LOS", "Sorry, you lost. Would you like to play again?"}
             };
 
             this.DoubleBuffered = true;
 
             PopulateCardVP();
             connection = new ClientConnect();
-            cards = new byte[4096];;
+            cards = new byte[4096];
 
             Thread mThread = new Thread(new ThreadStart(main));
+            mThread.IsBackground = true;
             mThread.Start();
         }
 
@@ -100,7 +110,11 @@ namespace PresidentsGame
         public void main()
         {
             byte[] resp = new byte[4096];
-            connection.RecvResponse(ref resp);
+
+            if (connection.RecvResponse(ref resp) == -1)
+            {
+                HandleError("E7");
+            }
 
             string result = ClientConnect.GetString(resp);
             result = result.Substring(0, result.Length - 1);
@@ -109,9 +123,15 @@ namespace PresidentsGame
             String[] pcards = result.Split(delimiter);
 
             DrawPlayerCards(pcards);
+            String[] blank = { "" };
+            Drawc(pcards, blank);
 
             byte[] turnp = new byte[sizeof(char)];
-            connection.RecvResponse(ref turnp);
+
+            if (connection.RecvResponse(ref turnp) == -1)
+            {
+                HandleError("E7");
+            }
 
             string charst = ClientConnect.GetString(turnp);
 
@@ -154,9 +174,15 @@ namespace PresidentsGame
             if (this.InvokeRequired == false)
             {
                 if (t != "T")
+                {
                     Play.Enabled = false;
+                    Pass.Enabled = false;
+                }
                 else
+                {
                     Play.Enabled = true;
+                    Pass.Enabled = true;
+                }
             }
             else
             {
@@ -268,7 +294,7 @@ namespace PresidentsGame
                 CC = this.GetNextControl(CC, true);
             }
 
-            this.Invalidate();
+            //this.Invalidate();
         }
 
         /**/
@@ -312,7 +338,7 @@ namespace PresidentsGame
                 CC = this.GetNextControl(CC, true);
             }
 
-           // this.Invalidate();
+           //this.Invalidate();
         }
 
         private void SoloForm_Load(object sender, EventArgs ev)
@@ -350,29 +376,39 @@ namespace PresidentsGame
             David Wilson
          */
         /**/
+
+        delegate void Pdelegate(object sender, PaintEventArgs e);
         private void SoloForm_Paint(object sender, PaintEventArgs e)
         {
-            DrawInfo cardpos = new DrawInfo();
-            DrawInfo[] DrawArray = (Carddraw.Count > 0) ? Carddraw.ToArray() : pcards.ToArray();
-            int count = (Carddraw.Count > 0) ? Carddraw.Count : pcards.Count;
-
-            if (Carddraw.Count > 0)
+            if (this.InvokeRequired == false)
             {
-                pcards = Carddraw;
+                    DrawInfo cardpos = new DrawInfo();
+                    DrawInfo[] DrawArray = (Carddraw.Count > 0) ? Carddraw.ToArray() : pcards.ToArray();
 
-                //Erase the list after the cards have been drawn to the screen as the list will be repopulated before future draws (after each hand)
-                Carddraw.RemoveRange(0, Carddraw.Count);
-            }
+                    if (Carddraw.Count > 0)
+                    {
+                        pcards = Carddraw;
 
-            for (int i = 0; i < count; i++)
-            {
-                cardpos = DrawArray[i];
-                //reduce width and height by 5%
-                float rwidth = 0.95F * this.C1.Width;
-                float rheight = 0.98F * this.C1.Height;
+                        //Erase the list after the cards have been drawn to the screen as the list will be repopulated before future draws (after each hand)
+                        Carddraw.Clear();
+                    }
 
-               e.Graphics.DrawImage(cardpos.img, cardpos.x, cardpos.y,rwidth,rheight);
-            }
+                    for (int i = 0; i < DrawArray.Length; i++)
+                    {
+                        cardpos = DrawArray[i];
+                        //reduce width and height by 5%
+                        float rwidth = 0.95F * this.C1.Width;
+                        float rheight = 0.98F * this.C1.Height;
+
+                        e.Graphics.DrawImage(cardpos.img, cardpos.x, cardpos.y, rwidth, rheight);
+                    }
+                }
+                else
+                {
+                    Pdelegate fp =
+                      new Pdelegate(SoloForm_Paint);
+                    this.Invoke(fp, new object[] { sender, e });
+                }
         }
 
         /**/
@@ -432,6 +468,28 @@ namespace PresidentsGame
                     EventArgs e = new EventArgs();
                     Pass_Click(this, e);
                 }
+                else if (code == "6")
+                {
+                    message = ErrorCodes[6];
+                    var btn = MessageBox.Show(message, null, MessageBoxButtons.OK);
+
+                    if (btn == DialogResult.OK)
+                    {
+                        Application.Exit();
+                        return;
+                    }
+                }
+                else if (code == "7")
+                {
+                    message = ErrorCodes[7];
+                    var btn = MessageBox.Show(message, null, MessageBoxButtons.OK);
+
+                    if (btn == DialogResult.OK)
+                    {
+                        Application.Exit();
+                        return;
+                    }
+                }
                 else
                 {
                     message = "Incorrect error recevied";
@@ -444,6 +502,81 @@ namespace PresidentsGame
                 sDelegate HE =
                   new sDelegate(HandleError);
                 this.Invoke(HE, new object[] { emessage });
+            }
+        }
+
+        /**/
+        /*
+          private void HandleEnd(String enmessage)  
+         
+        NAME
+           private void HandleEnd(String enmessage) - Allows user to choose if they'd like to play another game.
+        
+        SYNOPSIS
+            private void HandleEnd(String enmessage)
+         
+            String enmessage - A message representing the response from the server (in this case the error code).
+      
+         DESCRIPTION
+            Uses message boxes to ask user if they'd like to play again
+         
+         RETURNS
+            N/A
+         
+         AUTHOR
+            David Wilson
+         */
+        /**/
+        private void HandleEnd(String enmessage)
+        {
+            if (this.InvokeRequired == false)
+            {
+                if (enmessage == "WIN")
+                {
+                    enmessage = EndCodes["WIN"];
+                }
+                else if (enmessage == "LOS")
+                {
+                    enmessage = EndCodes["LOS"];
+                }
+                else
+                {
+                    enmessage = "Incorrect end game message recevied";
+                }
+
+                const string caption = "Replay?";
+                var result = MessageBox.Show(enmessage, caption, MessageBoxButtons.YesNo);
+ 
+                if (result == DialogResult.No)
+                {
+                    connection.SendCards("NP");
+                    Application.Exit();
+                }
+                else
+                {
+                    connection.SendCards("RP");
+                  
+                    byte[] resp = new byte [4096];
+                    connection.RecvResponse(ref resp);
+                    string opresult = ClientConnect.GetString(resp);
+
+                    if (opresult == "PA")
+                    {
+                        this.Hide();
+                        EntryScreen E2 = new EntryScreen();
+                        E2.Show();
+                    }
+                    else
+                    {
+                        Application.Exit();
+                    }
+                }
+            }
+            else
+            {
+                sDelegate HEN =
+                  new sDelegate(HandleEnd);
+                this.Invoke(HEN, new object[] { enmessage });
             }
         }
 
@@ -477,14 +610,25 @@ namespace PresidentsGame
         {
             if (this.InvokeRequired == false)
             {
-
                 DrawPlayerCards(messages);
-                DrawPlayedCards(messages1[0].Substring(0,messages1[0].Length-1).Split(','));
 
-                if (Play.Enabled == false)
-                    Play.Enabled = true;
-                else
-                    Play.Enabled = false;
+                if (messages1[0].Length > 0)
+                {
+                    DrawPlayedCards(messages1[0].Substring(0, messages1[0].Length - 1).Split(','));
+
+                    if (Play.Enabled == false)
+                    {
+                        Play.Enabled = true;
+                        Pass.Enabled = true;
+                    }
+                    else
+                    {
+                        Play.Enabled = false;
+                        Pass.Enabled = false;
+                    }
+                }
+
+                Refresh();
             }
             else
             {
@@ -520,10 +664,16 @@ namespace PresidentsGame
         private void HandleResponse()
         {
             byte[] resp = new byte [8192];
-            connection.RecvResponse(ref resp);
 
+            if (connection.RecvResponse(ref resp) == -1)
+            {
+                HandleError("E7");
+            }
 
             string result = ClientConnect.GetString(resp);
+
+            if (string.IsNullOrEmpty(result))
+                return;
 
             string r1 = result.Substring(0,1);
 
@@ -533,7 +683,7 @@ namespace PresidentsGame
                 return;
             }
 
-            if (r1 == "E" && Play.Enabled == true)
+            if (r1 == "E")
             {
                 HandleError(result);
                 return;
@@ -541,12 +691,9 @@ namespace PresidentsGame
 
             string winresult = ClientConnect.GetString(resp).Substring(0, 3);
             
-            if (winresult == "WIN")
+            if (winresult == "WIN" || winresult == "LOS")
             {
-                //Display some kind of win form
-                //ClientForm C1 = new ClientForm();
-                //C1.Show();
-                //this.Hide();
+                HandleEnd(winresult);
                 return;
             }
 
@@ -630,10 +777,13 @@ namespace PresidentsGame
                 if (C26.active == true) Settmp(25);
 
 
-                PrevH.Visible = true;
                 Clear();
 
-                connection.SendCards(ClientConnect.GetString(cards));
+                if (connection.SendCards(ClientConnect.GetString(cards)) == -1)
+                {
+                    HandleError("E7");
+                }
+
                 Array.Clear(cards, 0, 4096);
             }
             else
@@ -1026,7 +1176,11 @@ namespace PresidentsGame
         {
             if (this.InvokeRequired == false)
             {
-                connection.SendCards("Pass");
+                if (connection.SendCards("Pass") == -1)
+                {
+                    HandleError("E7");
+                }
+
                 Clear();
             }
             else
@@ -1036,5 +1190,9 @@ namespace PresidentsGame
             }
         }
 
+        private void ClientForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Application.Exit();
+        }
     }
 }

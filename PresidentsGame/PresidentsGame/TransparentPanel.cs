@@ -24,37 +24,60 @@ namespace PresidentsGame
             //base.OnPaintBackground(e);
         }
 
+        delegate void nDelegate(); 
+
         public void ToggleActive()
         {
-            Graphics g = this.CreateGraphics();
-
-            Pen myPen;
-
-            if (this.active == true)
+            if (this.InvokeRequired == false)
             {
-                myPen = new Pen(SystemColors.Control, 5);
-                this.active = false;
+                Graphics g = this.CreateGraphics();
+
+                Pen myPen;
+
+                if (this.active == true)
+                {
+                    myPen = new Pen(SystemColors.Control, 5);
+                    this.active = false;
+                }
+                else
+                {
+                    myPen = new Pen(SystemColors.ActiveCaptionText, 5);
+                    this.active = true;
+                }
+
+                g.DrawRectangle(myPen, g.VisibleClipBounds.X, g.VisibleClipBounds.Y, g.VisibleClipBounds.Width, g.VisibleClipBounds.Height);
             }
             else
             {
-                myPen = new Pen(SystemColors.ActiveCaptionText, 5);
-                this.active = true;
+                nDelegate tactive =
+                 new nDelegate(ToggleActive);
+                this.Invoke(tactive);
             }
-
-            g.DrawRectangle(myPen, g.VisibleClipBounds.X, g.VisibleClipBounds.Y, g.VisibleClipBounds.Width, g.VisibleClipBounds.Height);
         }
+
+        delegate void peDelegate(PaintEventArgs e);
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
-            Graphics g = e.Graphics;
 
-            Pen myPen;
+            if (this.InvokeRequired == false)
+            {
+                base.OnPaint(e);
+                Graphics g = e.Graphics;
 
-            myPen = new Pen(SystemColors.Control, 5);
-            this.active = false;
+                Pen myPen;
 
-            g.DrawRectangle(myPen, g.VisibleClipBounds.X, g.VisibleClipBounds.Y ,g.VisibleClipBounds.Width, g.VisibleClipBounds.Height);        
+                myPen = new Pen(SystemColors.Control, 5);
+                this.active = false;
+
+                g.DrawRectangle(myPen, g.VisibleClipBounds.X, g.VisibleClipBounds.Y, g.VisibleClipBounds.Width, g.VisibleClipBounds.Height);
+            }
+            else
+            {
+                peDelegate panelp =
+                 new peDelegate(OnPaint);
+                this.Invoke(panelp, new object[] { e });
+            }
         }
 
         public bool active { get; set; }

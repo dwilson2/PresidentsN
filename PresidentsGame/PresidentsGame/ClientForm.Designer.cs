@@ -32,7 +32,6 @@
             this.Moves = new System.Windows.Forms.GroupBox();
             this.Play = new System.Windows.Forms.Button();
             this.Pass = new System.Windows.Forms.Button();
-            this.Deal = new System.Windows.Forms.Button();
             this.PrevH = new System.Windows.Forms.Label();
             this.P1 = new System.Windows.Forms.Panel();
             this.P2 = new System.Windows.Forms.Panel();
@@ -72,12 +71,11 @@
             // 
             this.Moves.Controls.Add(this.Play);
             this.Moves.Controls.Add(this.Pass);
-            this.Moves.Controls.Add(this.Deal);
             this.Moves.Location = new System.Drawing.Point(501, 8);
             this.Moves.Margin = new System.Windows.Forms.Padding(2);
             this.Moves.Name = "Moves";
             this.Moves.Padding = new System.Windows.Forms.Padding(2);
-            this.Moves.Size = new System.Drawing.Size(101, 90);
+            this.Moves.Size = new System.Drawing.Size(101, 78);
             this.Moves.TabIndex = 6;
             this.Moves.TabStop = false;
             this.Moves.Text = "Moves";
@@ -85,7 +83,7 @@
             // Play
             // 
             this.Play.AutoSize = true;
-            this.Play.Location = new System.Drawing.Point(22, 69);
+            this.Play.Location = new System.Drawing.Point(23, 44);
             this.Play.Margin = new System.Windows.Forms.Padding(2);
             this.Play.Name = "Play";
             this.Play.Size = new System.Drawing.Size(67, 23);
@@ -97,7 +95,7 @@
             // Pass
             // 
             this.Pass.AutoSize = true;
-            this.Pass.Location = new System.Drawing.Point(23, 42);
+            this.Pass.Location = new System.Drawing.Point(23, 17);
             this.Pass.Margin = new System.Windows.Forms.Padding(2);
             this.Pass.Name = "Pass";
             this.Pass.Size = new System.Drawing.Size(60, 23);
@@ -105,19 +103,6 @@
             this.Pass.Text = "Pass";
             this.Pass.UseVisualStyleBackColor = true;
             this.Pass.Click += new System.EventHandler(this.Pass_Click);
-            // 
-            // Deal
-            // 
-            this.Deal.AutoSize = true;
-            this.Deal.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Deal.Location = new System.Drawing.Point(8, 15);
-            this.Deal.Margin = new System.Windows.Forms.Padding(2);
-            this.Deal.Name = "Deal";
-            this.Deal.Size = new System.Drawing.Size(81, 23);
-            this.Deal.TabIndex = 0;
-            this.Deal.Text = "Deal/ Restart";
-            this.Deal.UseVisualStyleBackColor = true;
-            this.Deal.Click += new System.EventHandler(this.Deal_Click);
             // 
             // PrevH
             // 
@@ -128,7 +113,6 @@
             this.PrevH.Size = new System.Drawing.Size(91, 13);
             this.PrevH.TabIndex = 40;
             this.PrevH.Text = "Last Hand Played";
-            this.PrevH.Visible = false;
             // 
             // P1
             // 
@@ -476,11 +460,13 @@
             this.Controls.Add(this.P1);
             this.Controls.Add(this.PrevH);
             this.Controls.Add(this.Moves);
+            this.DoubleBuffered = true;
             this.Margin = new System.Windows.Forms.Padding(2);
             this.MaximumSize = new System.Drawing.Size(626, 343);
             this.MinimumSize = new System.Drawing.Size(626, 343);
             this.Name = "ClientForm";
             this.Text = "Presidents";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ClientForm_FormClosed);
             this.Load += new System.EventHandler(this.SoloForm_Load);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.SoloForm_Paint);
             this.Moves.ResumeLayout(false);
@@ -495,7 +481,6 @@
         private System.Windows.Forms.GroupBox Moves;
         private System.Windows.Forms.Button Play;
         private System.Windows.Forms.Button Pass;
-        private System.Windows.Forms.Button Deal;
         private System.Windows.Forms.Label PrevH;
         private System.Windows.Forms.Panel P1;
         private System.Windows.Forms.Panel P2;

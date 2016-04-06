@@ -114,6 +114,7 @@ namespace PresidentsGame
             catch (SocketException e)
             {
                 Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
+
             }
         }
 
@@ -162,7 +163,9 @@ namespace PresidentsGame
             catch (SocketException e)
             {
                 Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
-                return (e.ErrorCode);
+
+                if (e.ErrorCode == 10054)
+                    return -1;
             }
 
             response = msg;
@@ -199,7 +202,10 @@ namespace PresidentsGame
             try
             {
                 //Small enough that it can all be sent in a single shot
-                clientSocket.Send(sizebuffer,sizeof(int),SocketFlags.None);
+                int sendlen = clientSocket.Send(sizebuffer,sizeof(int),SocketFlags.None);
+
+                if (sendlen == 0)
+                    return -1;
 
                 int bytesSent = 0;
 
@@ -212,7 +218,9 @@ namespace PresidentsGame
             catch (SocketException e)
             {
                 Console.WriteLine("{0} Error code: {1}.", e.Message, e.ErrorCode);
-                return (e.ErrorCode);
+
+                if (e.ErrorCode == 10054)
+                    return -1;
             }
 
             return 0;
