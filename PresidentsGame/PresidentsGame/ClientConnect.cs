@@ -202,10 +202,7 @@ namespace PresidentsGame
             try
             {
                 //Small enough that it can all be sent in a single shot
-                int sendlen = clientSocket.Send(sizebuffer,sizeof(int),SocketFlags.None);
-
-                if (sendlen == 0)
-                    return -1;
+                clientSocket.Send(sizebuffer,sizeof(int),SocketFlags.None);
 
                 int bytesSent = 0;
 

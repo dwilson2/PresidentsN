@@ -712,21 +712,21 @@ namespace PresidentsServer
 
             Deck tdeck2 = new Deck();
             tdeck2.SetCard(tdeck.GetCard(0).CV, tdeck.GetCard(0).SV);
-            tdeck2.SetCard(tdeck.GetCard(1).CV, tdeck.GetCard(0).SV);
+            tdeck2.SetCard(tdeck.GetCard(1).CV, tdeck.GetCard(1).SV);
 
             Deck tdeck3 = new Deck();
-            tdeck3.SetCard(tdeck.GetCard(2).CV, tdeck.GetCard(0).SV);
-            tdeck3.SetCard(tdeck.GetCard(3).CV, tdeck.GetCard(0).SV);
-            tdeck3.SetCard(tdeck.GetCard(4).CV, tdeck.GetCard(0).SV);
+            tdeck3.SetCard(tdeck.GetCard(2).CV, tdeck.GetCard(2).SV);
+            tdeck3.SetCard(tdeck.GetCard(3).CV, tdeck.GetCard(3).SV);
+            tdeck3.SetCard(tdeck.GetCard(4).CV, tdeck.GetCard(4).SV);
 
             Deck tdeck4 = new Deck();
             tdeck4.SetCard(tdeck.GetCard(0).CV, tdeck.GetCard(0).SV);
-            tdeck4.SetCard(tdeck.GetCard(1).CV, tdeck.GetCard(0).SV);
-            tdeck4.SetCard(tdeck.GetCard(2).CV, tdeck.GetCard(0).SV);
+            tdeck4.SetCard(tdeck.GetCard(1).CV, tdeck.GetCard(1).SV);
+            tdeck4.SetCard(tdeck.GetCard(2).CV, tdeck.GetCard(2).SV);
 
             Deck tdeck5 = new Deck();
-            tdeck5.SetCard(tdeck.GetCard(3).CV, tdeck.GetCard(0).SV);
-            tdeck5.SetCard(tdeck.GetCard(4).CV, tdeck.GetCard(0).SV);
+            tdeck5.SetCard(tdeck.GetCard(3).CV, tdeck.GetCard(3).SV);
+            tdeck5.SetCard(tdeck.GetCard(4).CV, tdeck.GetCard(4).SV);
 
             if (Multiples(tdeck2) && Multiples(tdeck3) || Multiples(tdeck4) && Multiples(tdeck5))
                 return true;
@@ -983,18 +983,17 @@ namespace PresidentsServer
             David Wilson
          */
         /**/
-        public byte[] Buildmessagecards(int turn)
+        public byte[] Buildmessagecards(int turn, Deck clientdeck)
         {
             byte[] cards = new byte[4096];
 
-            Deck decktouse = (turn == 0  ? AIdeck : pdeck);
             int offset = 0;
 
-            decktouse.OrderCards();
+            clientdeck.OrderCards();
 
-            for (int i = 0; i < decktouse.size(); i++)
+            for (int i = 0; i < clientdeck.size(); i++)
             {
-                string cardstring = decktouse.GetCard(i).name + ',';
+                string cardstring = clientdeck.GetCard(i).name + ',';
                 byte[] card = Program.GetBytes(cardstring);
                 System.Buffer.BlockCopy(card, 0, cards, offset, card.Length);
                 offset += card.Length;
@@ -1043,10 +1042,10 @@ namespace PresidentsServer
             return cards;
         }
 
-        public byte[] Buildmessage(int clientnum)
+        public byte[] Buildmessage(int clientnum, Deck clientdeck)
         {
             byte[] lp = BuildmessageLP();
-            byte[] p = Buildmessagecards(clientnum);
+            byte[] p = Buildmessagecards(clientnum, clientdeck);
 
             byte[] pf = new byte[lp.Length + p.Length];
             System.Buffer.BlockCopy(lp, 0, pf, 0, lp.Length);

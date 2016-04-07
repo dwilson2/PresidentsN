@@ -385,6 +385,8 @@ namespace PresidentsGame
                     DrawInfo cardpos = new DrawInfo();
                     DrawInfo[] DrawArray = (Carddraw.Count > 0) ? Carddraw.ToArray() : pcards.ToArray();
 
+                    System.Console.WriteLine("Paint call " + Carddraw.Count.ToString() + " " + pcards.ToArray().Length);
+
                     if (Carddraw.Count > 0)
                     {
                         pcards = Carddraw;
@@ -472,23 +474,15 @@ namespace PresidentsGame
                 {
                     message = ErrorCodes[6];
                     var btn = MessageBox.Show(message, null, MessageBoxButtons.OK);
-
-                    if (btn == DialogResult.OK)
-                    {
-                        Application.Exit();
-                        return;
-                    }
+                    
+                    Exit();
                 }
                 else if (code == "7")
                 {
                     message = ErrorCodes[7];
                     var btn = MessageBox.Show(message, null, MessageBoxButtons.OK);
-
-                    if (btn == DialogResult.OK)
-                    {
-                        Application.Exit();
-                        return;
-                    }
+                    
+                    Exit();
                 }
                 else
                 {
@@ -550,7 +544,7 @@ namespace PresidentsGame
                 if (result == DialogResult.No)
                 {
                     connection.SendCards("NP");
-                    Application.Exit();
+                    Exit();
                 }
                 else
                 {
@@ -568,7 +562,7 @@ namespace PresidentsGame
                     }
                     else
                     {
-                        Application.Exit();
+                        Exit();
                     }
                 }
             }
@@ -1191,6 +1185,11 @@ namespace PresidentsGame
         }
 
         private void ClientForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void Exit()
         {
             Application.Exit();
         }
