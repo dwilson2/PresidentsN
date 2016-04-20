@@ -427,7 +427,12 @@ namespace PresidentsServer
 
                     string[] cards = ProcessMessage(movebuff);
 
-                    int ec = G.VerifyHand(cards, turn);
+                   int ec;
+
+                   if (turn == 0)
+                        ec = G.VerifyHand(cards, turn,ref G.AIdeck);
+                   else
+                        ec = G.VerifyHand(cards, turn,ref G.pdeck);
 
                     if (ec == 0)
                     {

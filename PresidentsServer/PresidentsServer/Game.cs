@@ -34,7 +34,7 @@ namespace PresidentsServer
             public string name { get; set; }
         }
 
-    //Note this class is probably more accurately named hand (subset of entire deck)
+    //Note this class is probably more accurately named player hand (subset of entire deck)
     public class Deck : Object
     {
         /**/
@@ -345,7 +345,7 @@ namespace PresidentsServer
         /**/
         public void empty()
         {
-            deck.RemoveRange(0, size());
+            deck.Clear();
         }
 
         List<Card> deck;
@@ -391,19 +391,18 @@ namespace PresidentsServer
             David Wilson
          */
         /**/
-        public int VerifyHand(string[] cards, int turn)
+        public int VerifyHand(string[] cards, int turn, ref Deck clientdeck)
         {
-            Deck decktouse = (turn == 0 ? AIdeck : pdeck);
             int retval = 0;
 
-            decktouse.OrderCards();
+            clientdeck.OrderCards();
 
             Card nullc = new Card();
 
             for (int i = 0; i < cards.Length; i++)
             {
                 int cardi = Convert.ToInt32(cards[i],10);
-                Card cc = decktouse.GetCard(cardi);
+                Card cc = clientdeck.GetCard(cardi);
                 tdeck.SetCard(cc.CV, cc.SV);
 
                 if (cc.CV == nullc.CV && cc.SV == nullc.SV)
@@ -431,7 +430,7 @@ namespace PresidentsServer
             if (retval == 0)
             {
                 for (int i = 0; i < tdeck.size(); i++)
-                    (turn == 0 ? AIdeck : pdeck).RemoveCard(tdeck.GetCard(i).CV, tdeck.GetCard(i).SV);
+                    clientdeck.RemoveCard(tdeck.GetCard(i).CV, tdeck.GetCard(i).SV);
             }
 
             return retval;
@@ -649,7 +648,7 @@ namespace PresidentsServer
 
         /**/
         /*
-        public bool isStraight()
+        public bool Multiples(Deck deck)
         
         NAME
              public bool Multiples(Deck deck) - Determines if all cards in a played hand are the same numeric value.

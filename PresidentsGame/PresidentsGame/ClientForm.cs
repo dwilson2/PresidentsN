@@ -122,7 +122,6 @@ namespace PresidentsGame
             char delimiter = ',';
             String[] pcards = result.Split(delimiter);
 
-            DrawPlayerCards(pcards);
             String[] blank = { "" };
             Drawc(pcards, blank);
 
@@ -389,7 +388,12 @@ namespace PresidentsGame
 
                     if (Carddraw.Count > 0)
                     {
-                        pcards = Carddraw;
+                        pcards.Clear();
+
+                        for (int i = 0; i < Carddraw.Count; i++)
+                        {
+                            pcards.Add(Carddraw[i]);
+                        }
 
                         //Erase the list after the cards have been drawn to the screen as the list will be repopulated before future draws (after each hand)
                         Carddraw.Clear();
@@ -772,6 +776,12 @@ namespace PresidentsGame
 
 
                 Clear();
+
+                if (ClientConnect.GetString(cards) == "")
+                {
+                    HandleError("E1");
+                    return;
+                }
 
                 if (connection.SendCards(ClientConnect.GetString(cards)) == -1)
                 {
